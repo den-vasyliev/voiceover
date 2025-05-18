@@ -2,6 +2,6 @@ livekit-agents~=1.0.20
 livekit-plugins-openai~=1.0
 livekit-plugins-silero~=1.0
 livekit-plugins-elevenlabs~=1.0
-mcp
+mcp==1.7.1
 pytest
 PyYAML
