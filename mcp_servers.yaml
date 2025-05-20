@@ -23,7 +23,7 @@ servers:
   # Example A2A agent configuration
   - name: my-a2a-agent
     type: a2a
-    url: http://34.30.145.140/api/a2a/kagent/k8s-agent
+    url: http://a2a.mockee.me/api/a2a/kagent/k8s-agent
 #    allowed_tools: []  # (Optional) List A2A tool names if you want to restrict
     # auth:
     #   type: secret_key
