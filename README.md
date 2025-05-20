@@ -224,7 +224,7 @@ servers:
 - Integrate with external LLM agents, chatbots, or custom AI services that expose skills via the A2A protocol.
 - Chain together multiple agents, each with specialized capabilities.
 
-See the [A2A protocol documentation](https://github.com/modelcontext/protocol) for more details on how to implement your own A2A agent.
+See the [A2A protocol documentation](https://github.com/modelcontextprotocol) for more details on how to implement your own A2A agent.
 
 ## Project Structure
 
