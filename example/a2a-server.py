@@ -25,7 +25,14 @@ def get_agent_card():
 @app.post("/tasks/send")
 def handle_task():
     """Endpoint for A2A clients to send a new task (with an initial user message)."""
-    task_request = request.get_json()  # parse incoming JSON request
+    req = request.get_json()  # parse incoming JSON request
+    # Check for JSON-RPC 2.0 envelope
+    if isinstance(req, dict) and req.get("jsonrpc") == "2.0" and "params" in req:
+        jsonrpc_id = req.get("id")
+        task_request = req["params"]
+    else:
+        jsonrpc_id = None
+        task_request = req
     # Extract the task ID and the user's message text from the request.
     task_id = task_request.get("id")
     user_message = ""
@@ -33,11 +40,14 @@ def handle_task():
         # According to A2A spec, the user message is in task_request["message"]["parts"][0]["text"]
         user_message = task_request["message"]["parts"][0]["text"]
     except Exception as e:
-        return jsonify({"error": "Invalid request format"}), 400
- 
+        error_resp = {"error": "Invalid request format"}
+        if jsonrpc_id is not None:
+            return jsonify({"jsonrpc": "2.0", "id": jsonrpc_id, "error": error_resp}), 400
+        return jsonify(error_resp), 400
+
     # For this simple agent, the "processing" is just echoing the message back.
     agent_reply_text = f"Hello! You said: '{user_message}'"
- 
+
     # Formulate the response in A2A Task format.
     # We'll return a Task object with the final state = 'completed' and the agent's message.
     response_task = {
@@ -52,6 +62,9 @@ def handle_task():
         ]
         # We could also include an "artifacts" field if the agent returned files or other data.
     }
+    # If JSON-RPC, wrap the response
+    if jsonrpc_id is not None:
+        return jsonify({"jsonrpc": "2.0", "id": jsonrpc_id, "result": response_task})
     return jsonify(response_task)
  
 # Run the Flask app (A2A server) if this script is executed directly.
