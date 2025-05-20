@@ -228,14 +228,25 @@ See the [A2A protocol documentation](https://github.com/modelcontextprotocol) fo
 
 ## Project Structure
 
-- `agent.py`: Main agent implementation
-- `mcp_servers.yaml`: MCP server configuration
-- `mcp_client/`: MCP integration
-  - `server.py`: Server connection handlers
-  - `agent_tools.py`: MCP tools integration
-  - `util.py`: Utilities
-- `test_agent_config.py`: Unit tests
-- `requirements.txt`: Python dependencies
+- `main.py`: Entry point for running the agent
+- `agent_core.py`: Core agent logic and orchestration
+- `tool_integration.py`: Integration layer for MCP tools
+- `a2a.py`: Agent-to-Agent (A2A) protocol support
+- `mcp_config.py`: MCP server configuration loader and utilities
+- `test_agent_config.py`: Unit tests for agent configuration
+- `mcp_servers.yaml`: MCP server and tool configuration file
+- `Makefile`: Common development and setup commands
+- `system_prompt.txt`: System prompt and instructions for the agent
+- `example/`: Example scripts for A2A client/server
+  - `a2a-client.py`: Example A2A client script
+  - `a2a-server.py`: Example A2A server script
+- `mcp_client/`: MCP client integration package
+  - `__init__.py`: Package initializer
+  - `agent_tools.py`: MCP tool definitions and logic
+  - `auth.py`: Authentication middleware for MCP servers
+  - `server.py`: MCP server connection handlers
+  - `sse_client.py`: SSE client for MCP communication
+  - `util.py`: MCP client utilities
 
 ## Testing
 
