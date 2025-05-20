@@ -1,5 +1,5 @@
 import pytest
-from agent import load_mcp_config
+from mcp_config import load_mcp_config
 
 def test_load_mcp_config_success(tmp_path):
     config_content = """

@@ -199,6 +199,33 @@ The authentication system:
 
 For MCP servers that use different authentication methods, you can modify the `auth.py` file or extend the authentication middleware.
 
+### A2A Agent Integration
+
+The agent supports connecting to A2A (Agent-to-Agent) servers, allowing you to use skills from other AI agents as tools. This is useful for integrating with external AI services or custom agents that expose their own skills.
+
+To add an A2A agent, use the `type: a2a` field in your `mcp_servers.yaml`:
+
+```yaml
+servers:
+  - name: my-a2a-agent
+    type: a2a
+    url: https://my-a2a-agent.example.com
+    allowed_tools: [*]  # (optional) restrict which skills are available
+    headers:
+      Authorization: Bearer <token>  # (optional) custom headers for auth
+```
+
+- `type: a2a` tells the agent to treat this server as an A2A agent, not a standard MCP server.
+- The agent will automatically discover available skills from the A2A agent's `/\.well-known/agent.json` endpoint.
+- Each skill is exposed as a callable tool. You can invoke these skills by natural language or by specifying the tool name.
+- You can use `allowed_tools` to restrict which skills are available to the agent.
+
+**Use cases:**
+- Integrate with external LLM agents, chatbots, or custom AI services that expose skills via the A2A protocol.
+- Chain together multiple agents, each with specialized capabilities.
+
+See the [A2A protocol documentation](https://github.com/modelcontext/protocol) for more details on how to implement your own A2A agent.
+
 ## Project Structure
 
 - `agent.py`: Main agent implementation

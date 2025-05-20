@@ -38,7 +38,7 @@ certs-linux:
 	sudo apt-get update && sudo apt-get install -y ca-certificates
 
 run:
-	python agent.py console
+	python main.py console
 
 test:
 	@# SSL certificate check for macOS
