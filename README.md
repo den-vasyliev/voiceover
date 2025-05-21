@@ -2,7 +2,7 @@
   <img src="img/logo.png" alt="VoiceOps Logo" width="340" />
 </p>
 
-# VoiceOps: SRE & Kubernetes Agent with MCP Tools
+# VoiceOps: SRE & Kubernetes Agent with MCP/A2A Tools and Skills
 
 A conversational AI agent and voice assistant application built with the LiveKit Agents framework, capable of using Model Context Protocol (MCP) tools to interact with external services for SRE and Kubernetes operations.
 
@@ -24,6 +24,7 @@ A conversational AI agent and voice assistant application built with the LiveKit
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
+- [Getting Started with Kagent Integration](#getting-started-with-kagent-integration)
 
 ---
 
@@ -225,6 +226,36 @@ servers:
 - Chain together multiple agents, each with specialized capabilities.
 
 See the [A2A protocol documentation](https://github.com/modelcontextprotocol) for more details on how to implement your own A2A agent.
+
+
+## Getting Started with Kagent Integration
+
+VoiceOps can be integrated with [Kagent](https://kagent.dev/), an open-source framework for running agentic AI in Kubernetes environments. Kagent enables DevOps and platform engineers to automate complex operations, troubleshoot issues, and manage cloud-native resources using AI agents.
+
+### Why Integrate with Kagent?
+- **Unified AI Operations:** Leverage Kagent's built-in tools for Kubernetes, Prometheus, Istio, Argo, Helm, and more.
+- **Autonomous Agents:** Run agents that plan, execute, and analyze operational tasks in your cluster.
+- **Extensible Framework:** Easily extend with custom tools and agents for your specific workflows.
+
+### Basic Integration Steps
+1. **Deploy Kagent in your Kubernetes cluster:**
+   - Follow the [Kagent documentation](https://kagent.dev/) for installation instructions.
+2. **Configure Kagent as an A2A server:**
+   - In your `mcp_servers.yaml`, add your Kagent A2A server endpoint:
+    ```yaml
+        - name: k8s-a2a-agent
+          type: a2a
+          url: http://a2a.mockee.me/api/a2a/kagent/k8s-agent
+    ```
+3. **Start VoiceOps:**
+   - Run VoiceOps as usual. The agent will now be able to use Kagent's tools for cloud-native operations.
+
+### Example Use Cases
+- Diagnose application connectivity and performance issues
+- Automate traffic management and alerting
+- Run intelligent troubleshooting and remediation tasks
+
+For more details, visit the [Kagent website](https://kagent.dev/) and explore the documentation and community resources.
 
 ## Project Structure
 
