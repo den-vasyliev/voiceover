@@ -16,6 +16,7 @@ from mcp_config import load_mcp_config, expand_env_vars
 from a2a import A2AServerConfig
 from tool_integration import filtered_prepare_dynamic_tools
 from utils import sanitize_tool_name
+import asyncio
 
 async def entrypoint(ctx: JobContext):
     """
@@ -90,7 +91,28 @@ async def entrypoint(ctx: JobContext):
     # Optionally, greet via voice if possible
     if hasattr(agent, 'speak') and callable(getattr(agent, 'speak', None)):
         await agent.speak("Hello! I am your promotion assistant. How can I help you today?")
-    await session.start(agent=agent, room=ctx.room)
+
+    # Robust session loop with reconnection
+    max_retries = 10
+    retry_delay = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            await session.start(agent=agent, room=ctx.room)
+            break  # Exit if session ends cleanly
+        except Exception as exc:
+            logging.error(f"Agent session error (attempt {attempt}/{max_retries}): {exc}")
+            # Reconnect all MCP servers
+            for server in mcp_servers:
+                try:
+                    await server.connect()
+                except Exception as conn_exc:
+                    logging.error(f"Failed to reconnect MCP server {getattr(server, 'name', '')}: {conn_exc}")
+            if attempt < max_retries:
+                logging.info(f"Retrying agent session in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+            else:
+                logging.error("Max session retries reached. Exiting.")
+                raise
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint)) 

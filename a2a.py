@@ -26,7 +26,7 @@ class A2AServerConfig:
         """
         agent_card_url = f"{self.base_url}/.well-known/agent.json"
         async with httpx.AsyncClient() as client:
-            response = await client.get(agent_card_url, headers=self.headers)
+            response = await client.get(agent_card_url, headers=self.headers, timeout=10)
         if response.status_code != 200:
             raise RuntimeError(f"Failed to get agent card: {response.status_code}")
         agent_card = response.json()
@@ -44,7 +44,7 @@ def send_a2a_task(agent_base_url, user_text):
     Raises RuntimeError on failure or incomplete response.
     """
     agent_card_url = f"{agent_base_url}/.well-known/agent.json"
-    response = requests.get(agent_card_url)
+    response = requests.get(agent_card_url, timeout=10)
     if response.status_code != 200:
         raise RuntimeError(f"Failed to get agent card: {response.status_code}")
     # agent_card = response.json()  # Not used further
@@ -70,7 +70,7 @@ def send_a2a_task(agent_base_url, user_text):
     }
 
     tasks_send_url = f"{agent_base_url}/tasks/send"
-    result = requests.post(tasks_send_url, json=jsonrpc_payload)
+    result = requests.post(tasks_send_url, json=jsonrpc_payload, timeout=10)
     if result.status_code != 200:
         raise RuntimeError(f"Task request failed: {result.status_code}, {result.text}")
     task_response = result.json()

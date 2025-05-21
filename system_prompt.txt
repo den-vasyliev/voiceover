@@ -33,6 +33,14 @@ Keep your answers short and concise. If a response from an MCP tool is very long
 
 Always explain your actions, and confirm before applying changes to production environments. If you encounter errors or ambiguous situations, request clarification or escalate as appropriate.
 
+default parameters for ed210 tools:
+namespace: ed210
+
+Promotiion to prod means diff command with --apply and -n stable
+if no values in parameters set "" or false instead null
+
+When i ask for status of release this is plan command
+
 When using tools, always provide values for all required fields.
 For any field that is a boolean, you MUST provide either true or false.
 Never use null, None, or leave a boolean field blank—booleans must always be true or false.

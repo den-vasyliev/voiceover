@@ -38,7 +38,7 @@ class MCPServer:
 class _MCPServerWithClientSession(MCPServer):
     """Base class for MCP servers that use a ClientSession to communicate with the server."""
 
-    def __init__(self, cache_tools_list: bool, middleware: Optional[List[ToolMiddleware]] = None):
+    def __init__(self, cache_tools_list: bool, middleware: Optional[List[ToolMiddleware]] = None, max_retries: int = 5, retry_delay: float = 2.0):
         """
         Args:
             cache_tools_list: Whether to cache the tools list. If True, the tools list will be
@@ -49,12 +49,16 @@ class _MCPServerWithClientSession(MCPServer):
             middleware: A list of middleware functions that will be applied to the arguments
             before calling a tool. Each middleware should be a function that takes a tool name
             and arguments and returns modified arguments.
+            max_retries: Maximum number of connection attempts on failure.
+            retry_delay: Delay (in seconds) between retries.
         """
         self.session: Optional[ClientSession] = None
         self.exit_stack: AsyncExitStack = AsyncExitStack()
         self._cleanup_lock: asyncio.Lock = asyncio.Lock()
         self.cache_tools_list = cache_tools_list
         self.middleware = middleware or []
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
 
         # The cache is always dirty at startup, so that we fetch tools at least once
         self._cache_dirty = True
@@ -84,18 +88,27 @@ class _MCPServerWithClientSession(MCPServer):
         self._cache_dirty = True
 
     async def connect(self):
-        """Connect to the server."""
-        try:
-            transport = await self.exit_stack.enter_async_context(self.create_streams())
-            read, write = transport
-            session = await self.exit_stack.enter_async_context(ClientSession(read, write))
-            await session.initialize()
-            self.session = session
-            self.logger.info(f"Connected to MCP server: {self.name}")
-        except Exception as e:
-            self.logger.error(f"Error initializing MCP server: {e}")
-            await self.cleanup()
-            raise
+        """Connect to the server with automatic reconnection on failure."""
+        last_exc = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                transport = await self.exit_stack.enter_async_context(self.create_streams())
+                read, write = transport
+                session = await self.exit_stack.enter_async_context(ClientSession(read, write))
+                await session.initialize()
+                self.session = session
+                self.logger.info(f"Connected to MCP server: {self.name}")
+                return
+            except Exception as e:
+                last_exc = e
+                self.logger.error(f"Error initializing MCP server (attempt {attempt}/{self.max_retries}): {e}")
+                await self.cleanup()
+                if attempt < self.max_retries:
+                    self.logger.info(f"Retrying connection in {self.retry_delay} seconds...")
+                    await asyncio.sleep(self.retry_delay)
+        # If we get here, all retries failed
+        self.logger.error(f"Failed to connect to MCP server after {self.max_retries} attempts.")
+        raise last_exc
 
     async def list_tools(self) -> List[MCPTool]:
         """List the tools available on the server."""
@@ -119,13 +132,8 @@ class _MCPServerWithClientSession(MCPServer):
             raise
 
     async def call_tool(self, tool_name: str, arguments: Optional[Dict[str, Any]] = None) -> CallToolResult:
-        """Invoke a tool on the server."""
-        if not self.session:
-            raise RuntimeError("Server not initialized. Make sure you call connect() first.")
-
+        """Invoke a tool on the server with reconnection and retry logic."""
         arguments = arguments or {}
-        
-        # Apply middleware to arguments
         processed_args = arguments
         for middleware in self.middleware:
             try:
@@ -133,12 +141,24 @@ class _MCPServerWithClientSession(MCPServer):
             except Exception as e:
                 self.logger.error(f"Error in middleware for tool {tool_name}: {e}")
                 raise
-        
-        try:
-            return await self.session.call_tool(tool_name, processed_args)
-        except Exception as e:
-            self.logger.error(f"Error calling tool {tool_name}: {e}")
-            raise
+
+        last_exc = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                if not self.session:
+                    await self.connect()
+                return await self.session.call_tool(tool_name, processed_args)
+            except Exception as e:
+                last_exc = e
+                self.logger.error(f"Error calling tool {tool_name} (attempt {attempt}/{self.max_retries}): {e}")
+                await self.cleanup()
+                if attempt < self.max_retries:
+                    self.logger.info(f"Reconnecting and retrying tool call in {self.retry_delay} seconds...")
+                    await asyncio.sleep(self.retry_delay)
+                    await self.connect()
+                else:
+                    self.logger.error(f"Max retries reached for tool {tool_name}.")
+                    raise last_exc
 
     async def cleanup(self):
         """Cleanup the server."""
@@ -163,6 +183,8 @@ class MCPServerSse(_MCPServerWithClientSession):
         cache_tools_list: bool = False,
         name: Optional[str] = None,
         middleware: Optional[List[ToolMiddleware]] = None,
+        max_retries: int = 5,
+        retry_delay: float = 2.0,
     ):
         """Create a new MCP server based on the HTTP with SSE transport.
 
@@ -173,8 +195,10 @@ class MCPServerSse(_MCPServerWithClientSession):
             name: A readable name for the server.
             middleware: A list of middleware functions that will be applied to the arguments
                         before calling a tool.
+            max_retries: Maximum number of connection attempts on failure.
+            retry_delay: Delay (in seconds) between retries.
         """
-        super().__init__(cache_tools_list, middleware)
+        super().__init__(cache_tools_list, middleware, max_retries=max_retries, retry_delay=retry_delay)
         self.params = params
         self._name = name or f"SSE Server at {self.params.get('url', 'unknown')}"
 

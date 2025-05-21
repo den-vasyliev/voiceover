@@ -1,34 +1,30 @@
 # The 'tools' field is for documentation only; it does NOT restrict which tools are loaded from the server.
 # All tools provided by the server will be available to the agent unless you implement filtering in the code.
 servers:
-  # - name: agent-gateway-mcp-server
-  #   type: mcp
-  #   url: http://localhost:5555/sse
-
   # - name: github-mcp-server
   #   type: mcp
   #   url: http://localhost:8000/sse
   #   allowed_tools: [create_branch, create_pull_request, create_or_update_file] 
   #   tools: [get_instance] 
 
-  # - name: ed210-mcp-server
-  #   type: mcp
-  #   url: http://localhost:8090/sse
-  #   allowed_tools: [diff, plan, state]
-  #   auth:
-  #     type: secret_key
-  #     env_var: ED210_SECRET
-  #   tools: [run_promotion] 
+  - name: ed210-mcp-server
+    type: mcp
+    url: http://mcp.mockee.me/sse
+    allowed_tools: [diff, plan, state]
+    auth:
+      type: secret_key
+      env_var: ED210_SECRET
+    tools: [run_promotion] 
 
-  # Example A2A agent configuration
-  - name: my-a2a-agent
+  # K8S A2A agent configuration
+  - name: k8s-a2a-agent
     type: a2a
     url: http://a2a.mockee.me/api/a2a/kagent/k8s-agent
 #    allowed_tools: []  # (Optional) List A2A tool names if you want to restrict
-    # auth:
-    #   type: secret_key
-    #   env_var: MY_A2A_SECRET
-    # tools: []  # (Optional) Document available tools
+  # Kgateway A2A agent configuration
+  # - name: kgateway-a2a-agent
+  #   type: a2a
+  #   url: http://a2a.mockee.me/api/a2a/kagent/kgateway-agent
   # https://github.com/supercorp-ai/supergateway
   # - name: kubectl-ai-mcp-server
   #   type: mcp
