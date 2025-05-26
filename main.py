@@ -65,6 +65,18 @@ async def entrypoint(ctx: JobContext):
                     name=server_name
                 )
         elif server_type == "a2a":
+            # Only set Authorization header if auth is enabled in config
+            env_var_name = conf.get("auth", {}).get("env_var")
+            if env_var_name:
+                jwt_token = os.environ.get(env_var_name)
+                if jwt_token:
+                    headers["Authorization"] = f"Bearer {jwt_token}"
+                    print(f"A2A server '{server_name}' Authorization header: {headers['Authorization']}")
+                else:
+                    print(f"Warning: JWT env var '{env_var_name}' is configured for '{server_name}' but not set in environment.")
+            else:
+                # Ensure no Authorization header is present if auth is not enabled
+                headers.pop("Authorization", None)
             server = A2AServerConfig(
                 base_url=server_url,
                 headers=headers,
