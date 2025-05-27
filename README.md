@@ -373,3 +373,7 @@ Let's build something great together!
 - All contributors, testers, and users who help improve this project
 - Inspiration from the [Model Context Protocol (MCP)](https://github.com/modelcontext/protocol) and related projects
 - **This project was created in the spirit of Vibe Coding - when human creativity, collaboration, and a  personal passion come together with AI to create something amazing.**
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
