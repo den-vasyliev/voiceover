@@ -83,13 +83,13 @@ servers:
 
 ### MCP Servers
 
-Connect to any [MCP](https://modelcontextprotocol.io/)-compatible tool server over HTTP/SSE.
+Connect to any [MCP](https://modelcontextprotocol.io/)-compatible tool server over Streamable HTTP.
 
 ```yaml
 servers:
   - name: my-mcp-server
     type: mcp               # default if omitted
-    url: https://my-server.example.com/sse
+    url: https://my-server.example.com/mcp
     allowed_tools: [tool1, tool2]   # optional — omit to load all
     auth:
       type: bearer          # or: secret_key (HMAC-SHA256)
