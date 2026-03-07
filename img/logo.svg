@@ -31,5 +31,5 @@
   <!-- Tagline -->
   <text x="91" y="74" font-family="'SF Pro Text', 'Segoe UI', system-ui, sans-serif"
         font-size="12" font-weight="400" letter-spacing="0.3"
-        fill="#8888aa">Voice interface for any AI agent</text>
+        fill="#8888aa">Interface for any Agent</text>
 </svg>
