@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 120" width="760" height="120">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f1a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6c63ff"/>
+      <stop offset="100%" style="stop-color:#3ecfcf"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#6c63ff" opacity="0.6"/>
+    </marker>
+  </defs>
+
+  <rect width="760" height="120" rx="14" fill="url(#bg)"/>
+
+  <!-- Step 1: You -->
+  <rect x="16" y="28" width="90" height="64" rx="10" fill="#6c63ff18" stroke="#6c63ff" stroke-width="1.2"/>
+  <text x="61" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18">🎙️</text>
+  <text x="61" y="70" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#aaaaff" font-weight="600">You</text>
+  <text x="61" y="83" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#6666aa">any language</text>
+
+  <!-- Arrow -->
+  <line x1="108" y1="60" x2="130" y2="60" stroke="#6c63ff" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <!-- Step 2: Whisper STT -->
+  <rect x="132" y="28" width="100" height="64" rx="10" fill="#6c63ff18" stroke="#6c63ff" stroke-width="1.2"/>
+  <text x="182" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18">👂</text>
+  <text x="182" y="70" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#aaaaff" font-weight="600">Whisper STT</text>
+  <text x="182" y="83" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#6666aa">speech → text</text>
+
+  <!-- Arrow -->
+  <line x1="234" y1="60" x2="256" y2="60" stroke="#6c63ff" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <!-- Step 3: GPT-4.1 -->
+  <rect x="258" y="28" width="100" height="64" rx="10" fill="#6c63ff18" stroke="#6c63ff" stroke-width="1.2"/>
+  <text x="308" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18">🧠</text>
+  <text x="308" y="70" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#aaaaff" font-weight="600">GPT-4.1</text>
+  <text x="308" y="83" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#6666aa">reasoning</text>
+
+  <!-- Arrow -->
+  <line x1="360" y1="60" x2="382" y2="60" stroke="#6c63ff" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <!-- Step 4: A2A / MCP -->
+  <rect x="384" y="28" width="100" height="64" rx="10" fill="#4a9eff18" stroke="#4a9eff" stroke-width="1.2"/>
+  <text x="434" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18">🔌</text>
+  <text x="434" y="70" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#88bbff" font-weight="600">A2A / MCP</text>
+  <text x="434" y="83" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#446688">auto-discovery</text>
+
+  <!-- Arrow -->
+  <line x1="486" y1="60" x2="508" y2="60" stroke="#4a9eff" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <!-- Step 5: Agent -->
+  <rect x="510" y="28" width="100" height="64" rx="10" fill="#3ecfcf18" stroke="#3ecfcf" stroke-width="1.2"/>
+  <text x="560" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18">🤖</text>
+  <text x="560" y="70" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#3ecfcf" font-weight="600">Agent</text>
+  <text x="560" y="83" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#2a8888">executes task</text>
+
+  <!-- Arrow -->
+  <line x1="612" y1="60" x2="634" y2="60" stroke="#3ecfcf" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <!-- Step 6: ElevenLabs TTS -->
+  <rect x="636" y="28" width="108" height="64" rx="10" fill="#3ecfcf18" stroke="#3ecfcf" stroke-width="1.2"/>
+  <text x="690" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18">🔊</text>
+  <text x="690" y="70" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#3ecfcf" font-weight="600">ElevenLabs TTS</text>
+  <text x="690" y="83" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#2a8888">text → speech</text>
+</svg>
