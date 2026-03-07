@@ -8,20 +8,18 @@ import os
 import logging
 from livekit.agents.voice import Agent
 from livekit.agents.llm import ChatChunk
-from livekit.plugins import openai, silero, elevenlabs, anthropic
+from livekit.plugins import openai, silero, elevenlabs
 
 def create_llm():
     """Create the LLM instance from environment config. Can be shared with MCP sampling."""
-    llm_model = os.environ.get("AGENT_LLM_MODEL")
-    llm_backend = os.environ.get("AGENT_LLM_BACKEND", "anthropic")
-    if llm_backend == "anthropic":
-        return anthropic.LLM(model=llm_model or "claude-sonnet-4-5")
+    llm_model = os.environ.get("AGENT_LLM_MODEL", "gpt-4.1-mini")
+    llm_backend = os.environ.get("AGENT_LLM_BACKEND", "openai")
     if llm_backend == "ollama":
         return openai.LLM.with_ollama(
-            model=llm_model or "llama3",
+            model=llm_model,
             base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
         )
-    return openai.LLM(model=llm_model or "gpt-4.1-mini", timeout=60)
+    return openai.LLM(model=llm_model, timeout=60)
 
 
 class FunctionAgent(Agent):

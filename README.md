@@ -69,16 +69,8 @@ make install
 ### Configure
 
 ```sh
-export ANTHROPIC_API_KEY=your_anthropic_api_key  # default LLM backend
-export OPENAI_API_KEY=your_openai_api_key        # for Whisper STT
+export OPENAI_API_KEY=your_openai_api_key
 export ELEVEN_API_KEY=your_elevenlabs_api_key
-```
-
-The default LLM backend is Claude (`claude-sonnet-4-5`). Override with env vars:
-
-```sh
-export AGENT_LLM_BACKEND=anthropic   # anthropic (default) | openai | ollama
-export AGENT_LLM_MODEL=claude-opus-4-5
 ```
 
 Edit `config.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).
@@ -287,8 +279,7 @@ Contributions are welcome! Please open an issue first for major changes.
 - [LiveKit Agents](https://docs.livekit.io/agents/) — voice agent framework
 - [A2A Protocol](https://google.github.io/A2A/) — agent interoperability standard
 - [Model Context Protocol](https://modelcontextprotocol.io/) — tool server standard
-- [Anthropic](https://anthropic.com/) — Claude LLM (default)
-- [OpenAI](https://openai.com/) — Whisper STT; optional LLM backend
+- [OpenAI](https://openai.com/) — Whisper STT and GPT-4.1
 - [ElevenLabs](https://elevenlabs.io/) — multilingual text-to-speech
 - [Silero VAD](https://github.com/snakers4/silero-vad) — voice activity detection
 - DeepLearning.AI course: [Building AI Voice Agents for Production](https://www.deeplearning.ai/short-courses/building-ai-voice-agents-for-production/)
