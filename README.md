@@ -73,12 +73,12 @@ Connect to any agent that implements the [A2A protocol](https://google.github.io
 
 ```yaml
 servers:
-  - name: my-agent
+  - name: k8s-agent
     type: a2a
-    url: https://my-agent.example.com
+    url: https://kagent.example.com/api/a2a/kagent/k8s-agent
     auth:                   # optional
       type: bearer
-      env_var: MY_TOKEN
+      env_var: KAGENT_TOKEN
 ```
 
 ### MCP Servers
@@ -93,7 +93,7 @@ servers:
     allowed_tools: [tool1, tool2]   # optional — omit to load all
     auth:
       type: bearer          # or: secret_key (HMAC-SHA256)
-      env_var: MY_TOKEN
+      env_var: MCP_TOKEN
 ```
 
 ### Authentication
