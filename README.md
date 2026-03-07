@@ -5,7 +5,7 @@
 # Voiceover: Voice Interface for Any AI Agent
 
 <p align="center">
-  <img src="img/kagent.png" alt="Voiceover Architecture" width="740" />
+  <img src="img/architecture.svg" alt="Voiceover Architecture" width="820" />
 </p>
 
 **Voiceover** turns any AI agent or MCP server into a voice-controlled assistant — in any language. Connect it to [kagent](https://kagent.dev/), your own agents, or any MCP-compatible tool server and start talking.
