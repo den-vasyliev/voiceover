@@ -1,5 +1,6 @@
 livekit-agents~=1.0.20
 livekit-plugins-openai~=1.0
+livekit-plugins-anthropic~=1.0
 livekit-plugins-silero~=1.0
 livekit-plugins-elevenlabs~=1.0
 mcp>=1.26.0

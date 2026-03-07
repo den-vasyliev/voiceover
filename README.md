@@ -8,7 +8,19 @@
   <img src="img/architecture.svg" alt="Voiceover Architecture" width="820" />
 </p>
 
-> **Voiceover** turns any AI agent or MCP server into a voice-controlled assistant — in any language. Connect it to [kagent](https://kagent.dev/), your own agents, or any MCP-compatible tool server and start talking.
+>  **Voiceover** is an open-source voice interface for any AI agent.
+
+>Running AI agents in Kubernetes is becoming mainstream. Tools like
+  [kagent](https://kagent.dev/)  let you deploy specialized agents for Kubernetes operations, 
+  Helm, Istio, Cilium, observability — each with deep domain
+  expertise. But interacting with them still means typing commands    
+  into a terminal or a chat UI. 
+
+>What if you could just talk?                                        
+  
+                                                                      
+> The core idea is simple: your voice goes in, the agent does the work, the answer comes back as speech - just a conversation with your infrastructure.                       
+                                                 
 
 [▶️ Watch a quick demo](https://youtube.com/shorts/3cU2NpGXqRk)
 
@@ -16,16 +28,16 @@
 
 ## What's New
 
-Key changes compared to the original VoiceOps agent:
+Key changes compared to the first version of VoiceOps agent:
 
 | Area | Change |
 |---|---|
-| **Agent protocol** | Switched to [Google ADK](https://google.github.io/adk-docs/) compatible A2A — agents are now first-class citizens alongside MCP servers |
+| **Agent framework** | Switched to [Google ADK](https://google.github.io/adk-docs/) compatible A2A — agents are now first-class citizens alongside MCP servers |
 | **Transport** | Migrated from legacy SSE to [Streamable HTTP](https://modelcontextprotocol.io/docs/concepts/transports) (MCP spec 2025-03-26) |
 | **Auth** | Simplified to Bearer token only — removed HMAC-SHA256 workaround |
 | **MCP Sampling** | Added `sampling/createMessage` callback — MCP servers can request inference from the agent's model |
 | **Voice / Text** | Console UI supports both modes — toggle with `Ctrl+B` |
-| **Code** | Restructured into `src/` layout, dead code removed, test coverage added |
+| **Code** | Restructured layout, dead code removed, test coverage added |
 
 ---
 
@@ -57,8 +69,16 @@ make install
 ### Configure
 
 ```sh
-export OPENAI_API_KEY=your_openai_api_key
+export ANTHROPIC_API_KEY=your_anthropic_api_key  # default LLM backend
+export OPENAI_API_KEY=your_openai_api_key        # for Whisper STT
 export ELEVEN_API_KEY=your_elevenlabs_api_key
+```
+
+The default LLM backend is Claude (`claude-sonnet-4-5`). Override with env vars:
+
+```sh
+export AGENT_LLM_BACKEND=anthropic   # anthropic (default) | openai | ollama
+export AGENT_LLM_MODEL=claude-opus-4-5
 ```
 
 Edit `config.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).
@@ -267,7 +287,8 @@ Contributions are welcome! Please open an issue first for major changes.
 - [LiveKit Agents](https://docs.livekit.io/agents/) — voice agent framework
 - [A2A Protocol](https://google.github.io/A2A/) — agent interoperability standard
 - [Model Context Protocol](https://modelcontextprotocol.io/) — tool server standard
-- [OpenAI](https://openai.com/) — Whisper STT and GPT-4.1
+- [Anthropic](https://anthropic.com/) — Claude LLM (default)
+- [OpenAI](https://openai.com/) — Whisper STT; optional LLM backend
 - [ElevenLabs](https://elevenlabs.io/) — multilingual text-to-speech
 - [Silero VAD](https://github.com/snakers4/silero-vad) — voice activity detection
 - DeepLearning.AI course: [Building AI Voice Agents for Production](https://www.deeplearning.ai/short-courses/building-ai-voice-agents-for-production/)
