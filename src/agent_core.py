@@ -10,6 +10,18 @@ from livekit.agents.voice import Agent
 from livekit.agents.llm import ChatChunk
 from livekit.plugins import openai, silero, elevenlabs
 
+def create_llm():
+    """Create the LLM instance from environment config. Can be shared with MCP sampling."""
+    llm_model = os.environ.get("AGENT_LLM_MODEL", "gpt-4.1-mini")
+    llm_backend = os.environ.get("AGENT_LLM_BACKEND", "openai")
+    if llm_backend == "ollama":
+        return openai.LLM.with_ollama(
+            model=llm_model,
+            base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        )
+    return openai.LLM(model=llm_model, timeout=60)
+
+
 class FunctionAgent(Agent):
     """
     A LiveKit agent that uses MCP tools from one or more MCP servers.
@@ -19,7 +31,7 @@ class FunctionAgent(Agent):
     user feedback when a tool call is detected.
     """
 
-    def __init__(self):
+    def __init__(self, extra_instructions: str = "", llm=None):
         # Load system prompt from file if present, else from env, else use a minimal default
         prompt_path = os.environ.get("AGENT_SYSTEM_PROMPT_FILE", "system_prompt.txt")
         if os.path.exists(prompt_path):
@@ -27,16 +39,11 @@ class FunctionAgent(Agent):
                 instructions = f.read()
         else:
             instructions = os.environ.get("AGENT_SYSTEM_PROMPT", "You are a helpful assistant communicating through voice. Use the available MCP tools to answer questions.")
-        # Make LLM model and backend configurable via env var
-        llm_model = os.environ.get("AGENT_LLM_MODEL", "gpt-4.1-mini")
-        llm_backend = os.environ.get("AGENT_LLM_BACKEND", "openai")  # 'openai' or 'ollama'
-        if llm_backend == "ollama":
-            llm = openai.LLM.with_ollama(
-                model=llm_model,
-                base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
-            )
-        else:
-            llm = openai.LLM(model=llm_model, timeout=60)
+
+        if extra_instructions:
+            instructions = instructions + "\n\n## Server Guidance\n\n" + extra_instructions
+        if llm is None:
+            llm = create_llm()
         super().__init__(
             instructions=instructions,
             stt=openai.STT(),

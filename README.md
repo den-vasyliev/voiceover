@@ -46,7 +46,7 @@ A conversational AI agent and voice assistant application built with the LiveKit
 This agent can create, modify, and delete resources in your Kubernetes cluster. Always review your configuration and tool restrictions before connecting to a production or sensitive environment. Test in a safe environment first.
 
 <p align="center">
-  <img src="img/terminal.png" alt="VoiceOps terminal" width="100%`" />
+  <img src="img/terminal.png" alt="VoiceOps terminal" width="100%" />
 </p>
 
 
@@ -76,7 +76,6 @@ This agent can create, modify, and delete resources in your Kubernetes cluster. 
    ```sh
    make run
    ```
-7. 👋 Agent is ready! Say 'hello' to begin.
 
 
 ## Example: Running a Sample MCP Server
@@ -175,33 +174,38 @@ The agent connects to the specified LiveKit room and loads all MCP servers/tools
 
 ### Authentication
 
-The agent supports HMAC authentication for MCP servers that require it. To configure authentication:
+MCP servers support two authentication types via the `auth` block in `mcp_servers.yaml`.
 
-1. Add an `auth` section to your server configuration in `mcp_servers.yaml`:
+**Bearer token** — sets `Authorization: Bearer <token>` as an HTTP header:
 
 ```yaml
 servers:
   - name: secure-mcp-server
     url: https://example.com/sse
-    allowed_tools: [*_*]
+    auth:
+      type: bearer
+      env_var: MY_API_TOKEN
+```
+
+**HMAC secret key** — signs each tool call's arguments with HMAC-SHA256, adding the signature as an `auth` field in the request body:
+
+```yaml
+servers:
+  - name: hmac-mcp-server
+    url: https://example.com/sse
     auth:
       type: secret_key
       env_var: MY_SECRET_KEY
 ```
 
-2. Set the environment variable specified in `env_var`:
+In both cases, set the environment variable referenced by `env_var`:
 
 ```sh
+export MY_API_TOKEN=your_token_here
 export MY_SECRET_KEY=your_secret_key_here
 ```
 
-The authentication system:
-- Supports HMAC-SHA256 signatures
-- Automatically handles base64-encoded keys
-- Signs each request with the provided secret key
-- Adds the signature as an `auth` parameter in the request
-
-For MCP servers that use different authentication methods, you can modify the `auth.py` file or extend the authentication middleware.
+If the environment variable is not set, the server connects without authentication and a warning is logged.
 
 ### A2A Agent Integration
 
@@ -214,7 +218,7 @@ servers:
   - name: my-a2a-agent
     type: a2a
     url: https://my-a2a-agent.example.com
-    allowed_tools: [*]  # (optional) restrict which skills are available
+    allowed_tools: ["*"]  # (optional) restrict which skills are available
     headers:
       Authorization: Bearer <token>  # (optional) custom headers for auth
 ```
@@ -222,13 +226,13 @@ servers:
 - `type: a2a` tells the agent to treat this server as an A2A agent, not a standard MCP server.
 - The agent will automatically discover available skills from the A2A agent's `/\.well-known/agent.json` endpoint.
 - Each skill is exposed as a callable tool. You can invoke these skills by natural language or by specifying the tool name.
-- You can use `allowed_tools` to restrict which skills are available to the agent.
+- Note: `allowed_tools` is not applied for A2A servers — all discovered skills are available.
 
 **Use cases:**
 - Integrate with external LLM agents, chatbots, or custom AI services that expose skills via the A2A protocol.
 - Chain together multiple agents, each with specialized capabilities.
 
-See the [A2A protocol documentation](https://github.com/modelcontextprotocol) for more details on how to implement your own A2A agent.
+See the [A2A protocol specification](https://google.github.io/A2A/) for more details on how to implement your own A2A agent.
 
 
 ## Getting Started with Kagent Integration
@@ -262,25 +266,34 @@ For more details, visit the [Kagent website](https://kagent.dev/) and explore th
 
 ## Project Structure
 
-- `main.py`: Entry point for running the agent
-- `agent_core.py`: Core agent logic and orchestration
-- `tool_integration.py`: Integration layer for MCP tools
-- `a2a.py`: Agent-to-Agent (A2A) protocol support
-- `mcp_config.py`: MCP server configuration loader and utilities
-- `test_agent_config.py`: Unit tests for agent configuration
-- `mcp_servers.yaml`: MCP server and tool configuration file
-- `Makefile`: Common development and setup commands
-- `system_prompt.txt`: System prompt and instructions for the agent
-- `example/`: Example scripts for A2A client/server
-  - `a2a-client.py`: Example A2A client script
-  - `a2a-server.py`: Example A2A server script
-- `mcp_client/`: MCP client integration package
-  - `__init__.py`: Package initializer
-  - `agent_tools.py`: MCP tool definitions and logic
-  - `auth.py`: Authentication middleware for MCP servers
-  - `server.py`: MCP server connection handlers
-  - `sse_client.py`: SSE client for MCP communication
-  - `util.py`: MCP client utilities
+```
+voice-mcp-agent/
+├── src/
+│   ├── main.py               # Entry point for running the agent
+│   ├── agent_core.py         # Core agent logic and LiveKit integration
+│   ├── a2a.py                # Agent-to-Agent (A2A) protocol support
+│   ├── mcp_config.py         # Config loader and env var expansion
+│   ├── tool_integration.py   # Dynamic tool preparation for MCP and A2A servers
+│   └── mcp_client/
+│       ├── __init__.py
+│       ├── agent_tools.py    # LiveKit tool registration helpers
+│       ├── auth.py           # HMAC authentication middleware
+│       ├── server.py         # MCP server connection and retry logic
+│       ├── sse_client.py     # HTTP/SSE transport client
+│       └── util.py           # FunctionTool and MCPUtil helpers
+├── tests/
+│   ├── test_a2a.py
+│   ├── test_agent_config.py
+│   ├── test_auth.py
+│   ├── test_tool_integration.py
+│   └── test_util.py
+├── img/
+├── mcp_servers.yaml          # MCP/A2A server configuration
+├── system_prompt.txt         # Agent system prompt
+├── pytest.ini
+├── requirements.txt
+└── Makefile
+```
 
 ## Testing
 

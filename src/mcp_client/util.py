@@ -4,6 +4,27 @@ from typing import Any, Dict, List
 # Import from mcp libraries
 from mcp.types import Tool as MCPTool, CallToolResult
 
+
+def _normalize_schema(schema: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively ensure all object schemas have additionalProperties: false (required by OpenAI)."""
+    if not isinstance(schema, dict):
+        return schema
+    schema = dict(schema)
+    if schema.get("type") == "object":
+        schema.setdefault("additionalProperties", False)
+        schema.setdefault("properties", {})
+        schema["properties"] = {
+            k: _normalize_schema(v) for k, v in schema["properties"].items()
+        }
+    if "items" in schema:
+        schema["items"] = _normalize_schema(schema["items"])
+    if "anyOf" in schema:
+        schema["anyOf"] = [_normalize_schema(s) for s in schema["anyOf"]]
+    if "oneOf" in schema:
+        schema["oneOf"] = [_normalize_schema(s) for s in schema["oneOf"]]
+    return schema
+
+
 # A minimal FunctionTool class used by the agent.
 class FunctionTool:
     def __init__(self, name: str, description: str, params_json_schema: Dict[str, Any], on_invoke_tool, strict_json_schema: bool = False):
@@ -28,8 +49,7 @@ class MCPUtil:
 
     @classmethod
     def to_function_tool(cls, tool, server, convert_schemas_to_strict: bool) -> FunctionTool:
-        # In a more complete implementation, you might convert the JSON schema into a strict version.
-        schema = tool.inputSchema
+        schema = _normalize_schema(tool.inputSchema)
 
         # Use a default argument to capture the current tool correctly in the closure
         async def invoke_tool(context: Any, input_json: str, current_tool_name=tool.name) -> str:

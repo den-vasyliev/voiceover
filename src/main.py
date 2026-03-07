@@ -10,19 +10,52 @@ from livekit.agents import JobContext, WorkerOptions, cli
 from livekit.agents.voice import AgentSession
 from mcp_client import MCPClient, MCPServerSse
 from mcp_client.agent_tools import MCPToolsIntegration
-import fnmatch
-from agent_core import FunctionAgent
+from agent_core import FunctionAgent, create_llm
 from mcp_config import load_mcp_config, expand_env_vars
 from a2a import A2AServerConfig
 from tool_integration import filtered_prepare_dynamic_tools
-from utils import sanitize_tool_name
 import asyncio
+
+async def _fetch_server_prompts(servers) -> str:
+    """Fetch all prompts from MCP servers and return them as a formatted string."""
+    sections = []
+    for server in servers:
+        if not hasattr(server, "list_prompts"):
+            continue
+        try:
+            prompts = await server.list_prompts()
+        except Exception as e:
+            logging.warning(f"Could not list prompts from '{getattr(server, 'name', '')}': {e}")
+            continue
+        for prompt in prompts:
+            # Skip prompts that require arguments — they need runtime context
+            required_args = [a for a in (prompt.arguments or []) if getattr(a, "required", False)]
+            if required_args:
+                logging.debug(f"Skipping prompt '{prompt.name}' from '{server.name}' (requires args: {[a.name for a in required_args]})")
+                continue
+            try:
+                result = await server.get_prompt(prompt.name)
+                text_parts = []
+                for msg in result.messages:
+                    content = msg.content
+                    if hasattr(content, "text"):
+                        text_parts.append(content.text)
+                if text_parts:
+                    sections.append(f"### {prompt.name}\n" + "\n".join(text_parts))
+                    logging.info(f"Loaded prompt '{prompt.name}' from '{server.name}'")
+            except Exception as e:
+                logging.warning(f"Could not get prompt '{prompt.name}' from '{getattr(server, 'name', '')}': {e}")
+    return "\n\n".join(sections)
+
 
 async def entrypoint(ctx: JobContext):
     """
     Main entrypoint for the LiveKit agent application.
     Loads configuration, sets up MCP and A2A servers, prepares tools, and starts the agent session.
     """
+    # Create LLM once — shared between the agent and MCP sampling callbacks
+    llm = create_llm()
+
     # Load MCP server configs
     mcp_configs = load_mcp_config()
     mcp_servers = []
@@ -37,32 +70,43 @@ async def entrypoint(ctx: JobContext):
         server_url = conf["url"]
 
         if server_type == "mcp":
-            # Existing MCP logic (with/without auth)
             if "auth" in conf:
                 auth_type = conf["auth"].get("type", "")
                 env_var_name = conf["auth"].get("env_var", "")
-                secret_key = os.environ.get(env_var_name, "")
-                if secret_key:
-                    logging.info(f"Using {env_var_name} for authentication with {server_name}")
+                token = os.environ.get(env_var_name, "")
+                if not token:
+                    logging.warning(f"{env_var_name} not set, authentication will not be used for {server_name}")
+                if auth_type == "bearer" and token:
+                    headers["Authorization"] = f"Bearer {token}"
+                    logging.info(f"MCP server '{server_name}' Authorization header set from {env_var_name}")
+                    server = MCPServerSse(
+                        params={"url": server_url, "headers": headers},
+                        cache_tools_list=True,
+                        name=server_name,
+                        sampling_llm=llm,
+                    )
+                elif auth_type == "secret_key" and token:
+                    logging.info(f"Using {env_var_name} for HMAC authentication with {server_name}")
                     client = MCPClient(
                         url=server_url,
-                        secret_key=secret_key,
+                        secret_key=token,
                         headers=headers,
                         name=server_name
                     )
                     server = client.server
                 else:
-                    logging.warning(f"{env_var_name} not set, authentication will not be used for {server_name}")
                     server = MCPServerSse(
                         params={"url": server_url, "headers": headers},
                         cache_tools_list=True,
-                        name=server_name
+                        name=server_name,
+                        sampling_llm=llm,
                     )
             else:
                 server = MCPServerSse(
                     params={"url": server_url, "headers": headers},
                     cache_tools_list=True,
-                    name=server_name
+                    name=server_name,
+                    sampling_llm=llm,
                 )
         elif server_type == "a2a":
             # Only set Authorization header if auth is enabled in config
@@ -71,9 +115,9 @@ async def entrypoint(ctx: JobContext):
                 jwt_token = os.environ.get(env_var_name)
                 if jwt_token:
                     headers["Authorization"] = f"Bearer {jwt_token}"
-                    print(f"A2A server '{server_name}' Authorization header: {headers['Authorization']}")
+                    logging.info(f"A2A server '{server_name}' Authorization header set from {env_var_name}")
                 else:
-                    print(f"Warning: JWT env var '{env_var_name}' is configured for '{server_name}' but not set in environment.")
+                    logging.warning(f"JWT env var '{env_var_name}' is configured for '{server_name}' but not set in environment.")
             else:
                 # Ensure no Authorization header is present if auth is not enabled
                 headers.pop("Authorization", None)
@@ -92,14 +136,26 @@ async def entrypoint(ctx: JobContext):
     # Patch MCPToolsIntegration to filter tools per server
     MCPToolsIntegration.prepare_dynamic_tools = lambda mcp_servers, convert_schemas_to_strict=True, auto_connect=True: filtered_prepare_dynamic_tools(mcp_servers, allowed_tools_map, convert_schemas_to_strict, auto_connect)
 
+    # Connect servers first so we can fetch prompts
+    for server in mcp_servers:
+        try:
+            await server.connect()
+        except Exception as e:
+            logging.error(f"Failed to connect to server '{getattr(server, 'name', '')}': {e}")
+
+    # Fetch prompts from all MCP servers and inject into agent instructions
+    prompt_context = await _fetch_server_prompts(mcp_servers)
+
     agent = await MCPToolsIntegration.create_agent_with_tools(
         agent_class=FunctionAgent,
-        mcp_servers=mcp_servers
+        mcp_servers=mcp_servers,
+        agent_kwargs={"extra_instructions": prompt_context, "llm": llm},
+        auto_connect=False,
     )
 
     await ctx.connect()
     session = AgentSession()
-    print("👋 Agent is ready! Say 'hello' to begin.")
+    logging.info("Agent is ready.")
     # Optionally, greet via voice if possible
     if hasattr(agent, 'speak') and callable(getattr(agent, 'speak', None)):
         await agent.speak("Hello! I am your promotion assistant. How can I help you today?")

@@ -17,7 +17,10 @@ def load_mcp_config(config_path="mcp_servers.yaml"):
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"MCP config file not found: {config_path}")
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)["servers"]
+        config = yaml.safe_load(f)
+    if not isinstance(config, dict) or "servers" not in config:
+        raise ValueError(f"MCP config file '{config_path}' must contain a top-level 'servers' key")
+    return config["servers"]
 
 def expand_env_vars(value):
     """

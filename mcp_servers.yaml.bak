@@ -1,0 +1,106 @@
+# The 'tools' field is for documentation only; it does NOT restrict which tools are loaded from the server.
+# All tools provided by the server will be available to the agent unless you implement filtering in the code.
+servers:
+  # - name: github-mcp-server
+  #   type: mcp
+  #   url: http://localhost:8000/sse
+  #   allowed_tools: [create_branch, create_pull_request, create_or_update_file] 
+  #   tools: [get_instance] 
+
+  # - name: ed210-mcp-server
+  #   type: mcp
+  #   url: https://mcp.mockee.me/sse
+  #   allowed_tools: [diff, plan, state]
+  #   auth:
+  #     type: bearer        # or: secret_key (HMAC-SHA256)
+  #     env_var: ED210_TOKEN
+  
+  # K8S A2A agent configuration
+  # - name: local-a2a-agent
+  #   type: a2a
+  #   url: https://quietly-just-ferret.ngrok-free.app/api/a2a/kagent/k8s-agent
+    # auth:
+    #   type: jwt
+    #   env_var: K8S_A2A_JWT
+  # # K8S A2A agent configuration
+  # - name: k8s-a2a-agent
+  #   type: a2a
+  #   url: https://a2a.mockee.me/api/a2a/kagent/ed210
+  #   auth:
+  #     type: jwt
+  #     env_var: K8S_A2A_JWT
+#    allowed_tools: []  # (Optional) List A2A tool names if you want to restrict
+  # Kgateway A2A agent configuration
+  - name: agentregistry
+    type: mcp
+    url: https://agentregistry.example.com/mcp
+    auth:
+      type: bearer
+      env_var: AGENTREGISTRY_TOKEN
+    allowed_tools: ['get_catalog', 'get_registry_stats', 'list_catalog', 'list_deployments', 'list_environments', 'recommend_servers',]
+  # - name: triageagent
+  #   type: mcp
+  #   url: https://triage-agent.example.com/mcp
+  #   auth:
+  #     type: bearer
+  #     env_var: TRIAGEAGENT_TOKEN
+  # https://github.com/supercorp-ai/supergateway
+  # - name: kubectl-ai-mcp-server
+  #   type: mcp
+  #   url: http://localhost:8090/sse
+  # - name: k8s-mcp-server
+  #   type: mcp
+  #   # MCP official repo https://github.com/Flux159/mcp-server-kubernetes
+  #   url: http://localhost:8092/sse
+  #   allowed_tools: [list_pods,
+  #                   list_cronjobs,
+  #                   list_services,
+  #                   list_deployments,
+  #                   list_nodes,
+  #                   list_namespaces,
+  #                   list_contexts,
+  #                   list_jobs,
+  #                   list_pods,]
+  #   # list of tools to be used by the agent
+  #   tools: [ 
+  #           create_deployment,
+  #           cleanup,
+  #           scale_deployment,
+  #           delete_service,
+  #           update_service,
+  #           list_jobs,
+  #           list_nodes,
+  #           describe_pod,
+  #           get_logs,
+  #           describe_deployment,
+  #           delete_configmap,
+  #           create_service,
+  #           describe_service,
+  #           delete_namespace,
+  #           describe_node,
+  #           get_configmap,
+  #           list_pods,
+  #           list_cronjobs,
+  #           list_services,
+  #           list_deployments,
+  #           explain_resource,
+  #           list_api_resources,
+  #           port_forward,
+  #           stop_port_forward,
+  #           update_deployment,
+  #           update_configmap,
+  #           install_helm_chart,
+  #           upgrade_helm_chart,
+  #           uninstall_helm_chart,
+  #           list_contexts,
+  #           describe_cronjob,
+  #           create_configmap,
+  #           delete_pod,
+  #           get_job_logs,
+  #           create_pod,
+  #           create_cronjob,
+  #           get_current_context,
+  #           delete_deployment,
+  #           create_namespace,
+  #           delete_cronjob,
+  #           ] 

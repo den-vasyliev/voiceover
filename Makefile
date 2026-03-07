@@ -38,23 +38,10 @@ certs-linux:
 	sudo apt-get update && sudo apt-get install -y ca-certificates
 
 run:
-	python main.py console
+	python src/main.py console
 
 test:
-	@# SSL certificate check for macOS
-	@if [ "$(shell uname)" = "Darwin" ]; then \
-	  CERT_CMD="/Applications/Python $$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')/Install Certificates.command"; \
-	  if [ ! -f "$$CERT_CMD" ]; then \
-	    echo "[WARNING] Install Certificates.command not found. If you get SSL errors, run 'make certs-macos' and check your Python version."; \
-	  fi; \
-	fi
-	@# SSL certificate check for Linux
-	@if [ "$(shell uname)" = "Linux" ]; then \
-	  if ! dpkg -s ca-certificates >/dev/null 2>&1; then \
-	    echo "[WARNING] ca-certificates not installed. If you get SSL errors, run 'make certs-linux'."; \
-	  fi; \
-	fi
-	pytest 
+	pytest
 
 nodejs-macos:
 	brew install node

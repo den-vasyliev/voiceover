@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional, Tuple, Callable
 import logging
 
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
-from mcp.types import CallToolResult, JSONRPCMessage, Tool as MCPTool
-from mcp_client.sse_client import sse_client
+from mcp.types import CallToolResult, JSONRPCMessage, Tool as MCPTool, Prompt as MCPPrompt, GetPromptResult, CreateMessageResult, TextContent
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.client.session import ClientSession
 
 # Type for middleware function
@@ -30,6 +30,14 @@ class MCPServer:
         """Invoke a tool on the server."""
         raise NotImplementedError
 
+    async def list_prompts(self) -> List[MCPPrompt]:
+        """List the prompts available on the server."""
+        raise NotImplementedError
+
+    async def get_prompt(self, name: str, arguments: Optional[Dict[str, str]] = None) -> GetPromptResult:
+        """Get a prompt by name."""
+        raise NotImplementedError
+
     async def cleanup(self):
         """Cleanup the server."""
         raise NotImplementedError
@@ -38,7 +46,7 @@ class MCPServer:
 class _MCPServerWithClientSession(MCPServer):
     """Base class for MCP servers that use a ClientSession to communicate with the server."""
 
-    def __init__(self, cache_tools_list: bool, middleware: Optional[List[ToolMiddleware]] = None, max_retries: int = 5, retry_delay: float = 2.0):
+    def __init__(self, cache_tools_list: bool, middleware: Optional[List[ToolMiddleware]] = None, max_retries: int = 5, retry_delay: float = 2.0, sampling_llm=None):
         """
         Args:
             cache_tools_list: Whether to cache the tools list. If True, the tools list will be
@@ -55,6 +63,7 @@ class _MCPServerWithClientSession(MCPServer):
         self.session: Optional[ClientSession] = None
         self.exit_stack: AsyncExitStack = AsyncExitStack()
         self._cleanup_lock: asyncio.Lock = asyncio.Lock()
+        self.sampling_llm = sampling_llm
         self.cache_tools_list = cache_tools_list
         self.middleware = middleware or []
         self.max_retries = max_retries
@@ -87,14 +96,55 @@ class _MCPServerWithClientSession(MCPServer):
         """Invalidate the tools cache."""
         self._cache_dirty = True
 
+    async def _sampling_callback(self, context, params) -> CreateMessageResult:
+        """Handle sampling/createMessage requests from the MCP server."""
+        self.logger.info(f"Sampling request from '{self.name}': {len(params.messages)} messages, maxTokens={params.maxTokens}")
+        for i, msg in enumerate(params.messages):
+            text = msg.content.text if hasattr(msg.content, "text") else str(msg.content)
+            self.logger.debug(f"  [{i}] {msg.role}: {text}")
+        llm = self.sampling_llm
+        if llm is None:
+            return CreateMessageResult(
+                role="assistant",
+                content=TextContent(type="text", text="Sampling is not configured."),
+                model="none",
+                stopReason="endTurn",
+            )
+        from livekit.agents.llm import ChatContext, ChatMessage
+        chat_ctx = ChatContext()
+        if params.systemPrompt:
+            chat_ctx.add_message(role="system", content=params.systemPrompt)
+        for msg in params.messages:
+            content = msg.content
+            text = content.text if hasattr(content, "text") else str(content)
+            chat_ctx.add_message(role=msg.role, content=text)
+        response_text = ""
+        try:
+            async with llm.chat(chat_ctx=chat_ctx) as stream:
+                async for chunk in stream:
+                    if chunk.delta and chunk.delta.content:
+                        response_text += chunk.delta.content
+        except Exception as e:
+            self.logger.error(f"Sampling LLM call failed for '{self.name}': {e}")
+            raise
+        model_name = getattr(getattr(llm, "_opts", None), "model", "unknown")
+        self.logger.info(f"Sampling response for '{self.name}': model={model_name}, len={len(response_text)}")
+        return CreateMessageResult(
+            role="assistant",
+            content=TextContent(type="text", text=response_text),
+            model=model_name,
+            stopReason="endTurn",
+        )
+
     async def connect(self):
         """Connect to the server with automatic reconnection on failure."""
         last_exc = None
         for attempt in range(1, self.max_retries + 1):
             try:
                 transport = await self.exit_stack.enter_async_context(self.create_streams())
-                read, write = transport
-                session = await self.exit_stack.enter_async_context(ClientSession(read, write))
+                read, write, _ = transport
+                sampling_cb = self._sampling_callback if self.sampling_llm is not None else None
+                session = await self.exit_stack.enter_async_context(ClientSession(read, write, sampling_callback=sampling_cb))
                 await session.initialize()
                 self.session = session
                 self.logger.info(f"Connected to MCP server: {self.name}")
@@ -160,6 +210,27 @@ class _MCPServerWithClientSession(MCPServer):
                     self.logger.error(f"Max retries reached for tool {tool_name}.")
                     raise last_exc
 
+    async def list_prompts(self) -> List[MCPPrompt]:
+        """List the prompts available on the server."""
+        if not self.session:
+            raise RuntimeError("Server not initialized. Make sure you call connect() first.")
+        try:
+            result = await self.session.list_prompts()
+            return result.prompts
+        except Exception as e:
+            self.logger.error(f"Error listing prompts: {e}")
+            raise
+
+    async def get_prompt(self, name: str, arguments: Optional[Dict[str, str]] = None) -> GetPromptResult:
+        """Get a prompt by name."""
+        if not self.session:
+            raise RuntimeError("Server not initialized. Make sure you call connect() first.")
+        try:
+            return await self.session.get_prompt(name, arguments or {})
+        except Exception as e:
+            self.logger.error(f"Error getting prompt '{name}': {e}")
+            raise
+
     async def cleanup(self):
         """Cleanup the server."""
         async with self._cleanup_lock:
@@ -173,9 +244,9 @@ class _MCPServerWithClientSession(MCPServer):
 # Define parameter types for clarity
 MCPServerSseParams = Dict[str, Any]
 
-# SSE server implementation
+# Streamable HTTP server implementation
 class MCPServerSse(_MCPServerWithClientSession):
-    """MCP server implementation that uses the HTTP with SSE transport."""
+    """MCP server implementation using the Streamable HTTP transport."""
 
     def __init__(
         self,
@@ -185,22 +256,11 @@ class MCPServerSse(_MCPServerWithClientSession):
         middleware: Optional[List[ToolMiddleware]] = None,
         max_retries: int = 5,
         retry_delay: float = 2.0,
+        sampling_llm=None,
     ):
-        """Create a new MCP server based on the HTTP with SSE transport.
-
-        Args:
-            params: The params that configure the server including the URL, headers,
-                   timeout, and SSE read timeout.
-            cache_tools_list: Whether to cache the tools list.
-            name: A readable name for the server.
-            middleware: A list of middleware functions that will be applied to the arguments
-                        before calling a tool.
-            max_retries: Maximum number of connection attempts on failure.
-            retry_delay: Delay (in seconds) between retries.
-        """
-        super().__init__(cache_tools_list, middleware, max_retries=max_retries, retry_delay=retry_delay)
+        super().__init__(cache_tools_list, middleware, max_retries=max_retries, retry_delay=retry_delay, sampling_llm=sampling_llm)
         self.params = params
-        self._name = name or f"SSE Server at {self.params.get('url', 'unknown')}"
+        self._name = name or f"MCP Server at {self.params.get('url', 'unknown')}"
 
     def create_streams(
         self,
@@ -211,11 +271,11 @@ class MCPServerSse(_MCPServerWithClientSession):
         ]
     ]:
         """Create the streams for the server."""
-        return sse_client(
+        return streamablehttp_client(
             url=self.params["url"],
             headers=self.params.get("headers"),
-            timeout=self.params.get("timeout", 5),
-            sse_read_timeout=self.params.get("sse_read_timeout", 60 * 5),
+            timeout=self.params.get("timeout", 30),
+            sse_read_timeout=self.params.get("sse_read_timeout", 300),
         )
 
     @property

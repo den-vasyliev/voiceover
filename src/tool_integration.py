@@ -5,10 +5,12 @@ Handles dynamic tool preparation and MCPToolsIntegration patching for both MCP a
 """
 
 import fnmatch
+import json
 import logging
-from mcp_client.agent_tools import MCPToolsIntegration
-from a2a import A2AServerConfig, send_a2a_task
 import re
+from mcp_client.agent_tools import MCPToolsIntegration
+from mcp_client.util import FunctionTool, MCPUtil
+from a2a import A2AServerConfig
 
 # Patch MCPToolsIntegration to filter tools per server
 async def filtered_prepare_dynamic_tools(mcp_servers, allowed_tools_map, convert_schemas_to_strict=True, auto_connect=True):
@@ -23,8 +25,6 @@ async def filtered_prepare_dynamic_tools(mcp_servers, allowed_tools_map, convert
         # Branch for A2AServerConfig
         if isinstance(server, A2AServerConfig):
             skills = await server.list_tools()
-            from mcp_client.util import FunctionTool
-            import json
             for skill in skills:
                 # Minimal JSON schema: one string parameter 'prompt'
                 params_json_schema = {
@@ -54,7 +54,6 @@ async def filtered_prepare_dynamic_tools(mcp_servers, allowed_tools_map, convert
         if allowed is not None:
             allowed_patterns = list(allowed)
             tools = [t for t in tools if any(fnmatch.fnmatch(t.name, pat) for pat in allowed_patterns)]
-        from mcp_client.util import MCPUtil
         mcp_tools = [MCPUtil.to_function_tool(t, server, convert_schemas_to_strict) for t in tools]
         for tool_instance in mcp_tools:
             try:

@@ -1,8 +1,6 @@
 import logging
 import json
-import inspect
-import typing
-from typing import Any, List, Dict, Callable, Optional, Awaitable, Sequence, Tuple, Type, Union, cast
+from typing import Any, List, Dict, Callable, cast
 from uuid import uuid4
 
 # Import from the MCP module
@@ -79,92 +77,26 @@ class MCPToolsIntegration:
         Returns:
             A decorated async function that can be added to a LiveKit agent's tools
         """
-        # Get function_tool decorator from LiveKit
-        # Import locally to avoid circular imports
         from livekit.agents.llm import function_tool
 
-        # Create parameters list from JSON schema
-        params = []
-        annotations = {}
-        schema_props = tool.params_json_schema.get("properties", {})
-        schema_required = set(tool.params_json_schema.get("required", []))
-        type_map = {
-            "string": str, "integer": int, "number": float,
-            "boolean": bool, "array": list, "object": dict,
+        raw_schema = {
+            "name": tool.name,
+            "description": tool.description or "",
+            "parameters": tool.params_json_schema,
         }
-
-        # Build parameters from the schema properties
-        for p_name, p_details in schema_props.items():
-            json_type = p_details.get("type", "string")
-            py_type = type_map.get(json_type, typing.Any)
-            annotations[p_name] = py_type
-
-            # Use inspect.Parameter.empty for required params, None otherwise
-            default = inspect.Parameter.empty if p_name in schema_required else p_details.get("default", None)
-            params.append(inspect.Parameter(
-                name=p_name,
-                kind=inspect.Parameter.KEYWORD_ONLY,
-                annotation=py_type,
-                default=default
-            ))
-
-        # Define the actual function that will be called by the agent
-        async def tool_impl(**kwargs):
-            input_json = json.dumps(kwargs)
-            logger.info(f"Invoking tool '{tool.name}' with args: {kwargs}")
-            result_str = await tool.on_invoke_tool(None, input_json)
+        async def tool_impl(raw_arguments: dict) -> str:
+            logger.info(f"Invoking tool '{tool.name}' with args: {raw_arguments}")
+            result_str = await tool.on_invoke_tool(None, json.dumps(raw_arguments))
             logger.info(f"Tool '{tool.name}' result: {result_str}")
             return result_str
 
-        # Set function metadata
-        tool_impl.__signature__ = inspect.Signature(parameters=params)
         tool_impl.__name__ = tool.name
-        tool_impl.__doc__ = tool.description
-        tool_impl.__annotations__ = {'return': str, **annotations}
 
-        # Apply the decorator and return
-        return function_tool()(tool_impl)
-
-    @staticmethod
-    async def register_with_agent(agent, mcp_servers: List[MCPServer],
-                                 convert_schemas_to_strict: bool = True,
-                                 auto_connect: bool = True) -> List[Callable]:
-        """
-        Helper method to prepare and register MCP tools with a LiveKit agent.
-
-        Args:
-            agent: The LiveKit agent instance
-            mcp_servers: List of MCPServer instances
-            convert_schemas_to_strict: Whether to convert schemas to strict format
-            auto_connect: Whether to auto-connect to servers
-
-        Returns:
-            List of tool functions that were registered
-        """
-        # Prepare the dynamic tools
-        tools = await MCPToolsIntegration.prepare_dynamic_tools(
-            mcp_servers,
-            convert_schemas_to_strict=convert_schemas_to_strict,
-            auto_connect=auto_connect
-        )
-
-        # Register with the agent
-        if hasattr(agent, '_tools') and isinstance(agent._tools, list):
-            agent._tools.extend(tools)
-            logger.info(f"Registered {len(tools)} MCP tools with agent")
-
-            # Log the names of registered tools
-            if tools:
-                tool_names = [getattr(t, '__name__', 'unknown') for t in tools]
-                logger.info(f"Registered tool names: {tool_names}")
-        else:
-            logger.warning("Agent does not have a '_tools' attribute, tools were not registered")
-
-        return tools
+        return function_tool(tool_impl, raw_schema=raw_schema)
 
     @staticmethod
     async def create_agent_with_tools(agent_class, mcp_servers: List[MCPServer], agent_kwargs: Dict = None,
-                                    convert_schemas_to_strict: bool = True) -> Any:
+                                    convert_schemas_to_strict: bool = True, auto_connect: bool = True) -> Any:
         """
         Factory method to create and initialize an agent with MCP tools already loaded.
 
@@ -173,18 +105,19 @@ class MCPToolsIntegration:
             mcp_servers: List of MCP servers to register with the agent
             agent_kwargs: Additional keyword arguments to pass to the agent constructor
             convert_schemas_to_strict: Whether to convert JSON schemas to strict format
+            auto_connect: Whether to connect to servers before fetching tools
 
         Returns:
             An initialized agent instance with MCP tools registered
         """
-        # Connect to MCP servers
-        for server in mcp_servers:
-            if not getattr(server, 'connected', False):
-                try:
-                    logger.debug(f"Connecting to MCP server: {server.name}")
-                    await server.connect()
-                except Exception as e:
-                    logger.error(f"Failed to connect to MCP server {server.name}: {e}")
+        if auto_connect:
+            for server in mcp_servers:
+                if not getattr(server, 'connected', False):
+                    try:
+                        logger.debug(f"Connecting to MCP server: {server.name}")
+                        await server.connect()
+                    except Exception as e:
+                        logger.error(f"Failed to connect to MCP server {server.name}: {e}")
 
         # Create agent instance
         agent_kwargs = agent_kwargs or {}

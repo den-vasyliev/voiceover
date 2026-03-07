@@ -1,5 +1,7 @@
+import os
 import pytest
-from mcp_config import load_mcp_config
+import yaml
+from mcp_config import load_mcp_config, expand_env_vars
 
 def test_load_mcp_config_success(tmp_path):
     config_content = """
@@ -50,5 +52,28 @@ def test_load_mcp_config_missing_file():
 def test_load_mcp_config_malformed(tmp_path):
     config_file = tmp_path / "mcp_servers.yaml"
     config_file.write_text("not: valid: yaml: : :")
-    with pytest.raises(Exception):
-        load_mcp_config(str(config_file)) 
+    with pytest.raises(yaml.YAMLError):
+        load_mcp_config(str(config_file))
+
+def test_load_mcp_config_missing_servers_key(tmp_path):
+    config_file = tmp_path / "mcp_servers.yaml"
+    config_file.write_text("foo: bar\n")
+    with pytest.raises(ValueError, match="'servers'"):
+        load_mcp_config(str(config_file))
+
+def test_expand_env_vars_replaces_known_var(monkeypatch):
+    monkeypatch.setenv("MY_TOKEN", "abc123")
+    assert expand_env_vars("Bearer ${MY_TOKEN}") == "Bearer abc123"
+
+def test_expand_env_vars_missing_var_becomes_empty():
+    # Unset variable should expand to empty string
+    os.environ.pop("UNDEFINED_VAR_XYZ", None)
+    assert expand_env_vars("prefix_${UNDEFINED_VAR_XYZ}_suffix") == "prefix__suffix"
+
+def test_expand_env_vars_no_placeholder():
+    assert expand_env_vars("no-substitution-here") == "no-substitution-here"
+
+def test_expand_env_vars_multiple_placeholders(monkeypatch):
+    monkeypatch.setenv("HOST", "localhost")
+    monkeypatch.setenv("PORT", "8080")
+    assert expand_env_vars("http://${HOST}:${PORT}/sse") == "http://localhost:8080/sse" 
