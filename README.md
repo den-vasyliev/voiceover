@@ -55,7 +55,7 @@ export OPENAI_API_KEY=your_openai_api_key
 export ELEVEN_API_KEY=your_elevenlabs_api_key
 ```
 
-Edit `mcp_servers.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).
+Edit `config.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).
 
 ### Run
 
@@ -92,22 +92,16 @@ servers:
     url: https://my-server.example.com/mcp
     allowed_tools: [tool1, tool2]   # optional — omit to load all
     auth:
-      type: bearer          # or: secret_key (HMAC-SHA256)
+      type: bearer
       env_var: MCP_TOKEN
 ```
 
 ### Authentication
 
-Both bearer tokens and HMAC-SHA256 signing are supported:
-
 ```yaml
 auth:
   type: bearer        # sets Authorization: Bearer <token>
   env_var: MY_TOKEN
-
-auth:
-  type: secret_key    # signs each request with HMAC-SHA256
-  env_var: MY_SECRET
 ```
 
 ---
@@ -165,7 +159,7 @@ spec:
         - "Describe deployment nginx"
 ```
 
-### 3. Configure mcp_servers.yaml
+### 3. Configure config.yaml
 
 ```yaml
 servers:
@@ -203,7 +197,7 @@ voiceover/
 │       ├── agent_tools.py    # LiveKit tool helpers
 │       └── util.py           # Shared utilities
 ├── tests/
-├── mcp_servers.yaml          # Agent/server configuration
+├── config.yaml          # Agent/server configuration
 ├── system_prompt.txt         # LLM system prompt
 ├── requirements.txt
 └── Makefile

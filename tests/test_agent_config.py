@@ -13,7 +13,7 @@ servers:
     url: https://flux-mcp.example.com
     allowed_tools: [deploy, status]
 """
-    config_file = tmp_path / "mcp_servers.yaml"
+    config_file = tmp_path / "config.yaml"
     config_file.write_text(config_content)
     servers = load_mcp_config(str(config_file))
     assert len(servers) == 2
@@ -29,7 +29,7 @@ servers:
     url: http://localhost:8092/sse
     allowed_tools: [list_*, describe_*]
 """
-    config_file = tmp_path / "mcp_servers.yaml"
+    config_file = tmp_path / "config.yaml"
     config_file.write_text(config_content)
     servers = load_mcp_config(str(config_file))
     assert servers[0]["allowed_tools"] == ["list_*", "describe_*"]
@@ -40,7 +40,7 @@ servers:
   - name: all-tools
     url: http://localhost:8092/sse
 """
-    config_file = tmp_path / "mcp_servers.yaml"
+    config_file = tmp_path / "config.yaml"
     config_file.write_text(config_content)
     servers = load_mcp_config(str(config_file))
     assert "allowed_tools" not in servers[0]
@@ -50,13 +50,13 @@ def test_load_mcp_config_missing_file():
         load_mcp_config("nonexistent.yaml")
 
 def test_load_mcp_config_malformed(tmp_path):
-    config_file = tmp_path / "mcp_servers.yaml"
+    config_file = tmp_path / "config.yaml"
     config_file.write_text("not: valid: yaml: : :")
     with pytest.raises(yaml.YAMLError):
         load_mcp_config(str(config_file))
 
 def test_load_mcp_config_missing_servers_key(tmp_path):
-    config_file = tmp_path / "mcp_servers.yaml"
+    config_file = tmp_path / "config.yaml"
     config_file.write_text("foo: bar\n")
     with pytest.raises(ValueError, match="'servers'"):
         load_mcp_config(str(config_file))

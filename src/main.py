@@ -8,7 +8,7 @@ import os
 import logging
 from livekit.agents import JobContext, WorkerOptions, cli
 from livekit.agents.voice import AgentSession
-from mcp_client import MCPClient, MCPServerSse
+from mcp_client import MCPServerSse
 from mcp_client.agent_tools import MCPToolsIntegration
 from agent_core import FunctionAgent, create_llm
 from mcp_config import load_mcp_config, expand_env_vars
@@ -85,15 +85,6 @@ async def entrypoint(ctx: JobContext):
                         name=server_name,
                         sampling_llm=llm,
                     )
-                elif auth_type == "secret_key" and token:
-                    logging.info(f"Using {env_var_name} for HMAC authentication with {server_name}")
-                    client = MCPClient(
-                        url=server_url,
-                        secret_key=token,
-                        headers=headers,
-                        name=server_name
-                    )
-                    server = client.server
                 else:
                     server = MCPServerSse(
                         params={"url": server_url, "headers": headers},

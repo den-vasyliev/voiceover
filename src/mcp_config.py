@@ -8,7 +8,7 @@ import os
 import yaml
 import re
 
-def load_mcp_config(config_path="mcp_servers.yaml"):
+def load_mcp_config(config_path="config.yaml"):
     """
     Load MCP server configuration from a YAML file.
     Raises FileNotFoundError if the config file does not exist.
