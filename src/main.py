@@ -158,7 +158,7 @@ async def entrypoint(ctx: JobContext):
     logging.info("Agent is ready.")
     # Optionally, greet via voice if possible
     if hasattr(agent, 'speak') and callable(getattr(agent, 'speak', None)):
-        await agent.speak("Hello! I am your promotion assistant. How can I help you today?")
+        await agent.speak("Hello! How can I help you today?")
 
     # Robust session loop with reconnection
     max_retries = 10

@@ -53,9 +53,6 @@ make install
 ```sh
 export OPENAI_API_KEY=your_openai_api_key
 export ELEVEN_API_KEY=your_elevenlabs_api_key
-export LIVEKIT_URL=wss://your-livekit-server
-export LIVEKIT_API_KEY=your_livekit_api_key
-export LIVEKIT_API_SECRET=your_livekit_api_secret
 ```
 
 Edit `mcp_servers.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).

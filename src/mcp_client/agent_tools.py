@@ -6,7 +6,7 @@ from uuid import uuid4
 # Import from the MCP module
 from .util import MCPUtil, FunctionTool
 from .server import MCPServer, MCPServerSse
-from livekit.agents import ChatContext, AgentSession, JobContext
+from livekit.agents import ChatContext
 
 logger = logging.getLogger("mcp-agent-tools")
 
