@@ -2,15 +2,30 @@
   <img src="img/logo.svg" alt="Voiceover Logo" width="340" />
 </p>
 
-# Voiceover: Voice Interface for Any AI Agent
+<h1 align="center">Voiceover: Voice Interface for Any AI Agent</h1>
 
 <p align="center">
   <img src="img/architecture.svg" alt="Voiceover Architecture" width="820" />
 </p>
 
-**Voiceover** turns any AI agent or MCP server into a voice-controlled assistant — in any language. Connect it to [kagent](https://kagent.dev/), your own agents, or any MCP-compatible tool server and start talking.
+> **Voiceover** turns any AI agent or MCP server into a voice-controlled assistant — in any language. Connect it to [kagent](https://kagent.dev/), your own agents, or any MCP-compatible tool server and start talking.
 
 [▶️ Watch a quick demo](https://youtube.com/shorts/3cU2NpGXqRk)
+
+---
+
+## What's New
+
+Key changes compared to the original VoiceOps agent:
+
+| Area | Change |
+|---|---|
+| **Agent protocol** | Switched to [Google ADK](https://google.github.io/adk-docs/) compatible A2A — agents are now first-class citizens alongside MCP servers |
+| **Transport** | Migrated from legacy SSE to [Streamable HTTP](https://modelcontextprotocol.io/docs/concepts/transports) (MCP spec 2025-03-26) |
+| **Auth** | Simplified to Bearer token only — removed HMAC-SHA256 workaround |
+| **MCP Sampling** | Added `sampling/createMessage` callback — MCP servers can request inference from the agent's model |
+| **Voice / Text** | Console UI supports both modes — toggle with `Ctrl+B` |
+| **Code** | Restructured into `src/` layout, dead code removed, test coverage added |
 
 ---
 
