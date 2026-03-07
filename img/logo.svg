@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 120" width="340" height="120">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f1a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6c63ff"/>
+      <stop offset="100%" style="stop-color:#3ecfcf"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="340" height="120" rx="16" fill="url(#bg)"/>
+
+  <!-- Voice waveform bars -->
+  <g transform="translate(24, 60)">
+    <rect x="0"  y="-8"  width="5" height="16" rx="2.5" fill="url(#accent)" opacity="0.5"/>
+    <rect x="9"  y="-18" width="5" height="36" rx="2.5" fill="url(#accent)" opacity="0.7"/>
+    <rect x="18" y="-28" width="5" height="56" rx="2.5" fill="url(#accent)"/>
+    <rect x="27" y="-20" width="5" height="40" rx="2.5" fill="url(#accent)" opacity="0.8"/>
+    <rect x="36" y="-12" width="5" height="24" rx="2.5" fill="url(#accent)" opacity="0.6"/>
+    <rect x="45" y="-6"  width="5" height="12" rx="2.5" fill="url(#accent)" opacity="0.4"/>
+  </g>
+
+  <!-- Agent network nodes -->
+  <g transform="translate(258, 30)" opacity="0.85">
+    <!-- Center node -->
+    <circle cx="24" cy="30" r="7" fill="none" stroke="url(#accent)" stroke-width="1.5"/>
+    <circle cx="24" cy="30" r="3" fill="url(#accent)"/>
+    <!-- Satellite nodes -->
+    <circle cx="48" cy="12" r="4" fill="none" stroke="#6c63ff" stroke-width="1.2"/>
+    <circle cx="48" cy="12" r="1.8" fill="#6c63ff"/>
+    <circle cx="48" cy="48" r="4" fill="none" stroke="#3ecfcf" stroke-width="1.2"/>
+    <circle cx="48" cy="48" r="1.8" fill="#3ecfcf"/>
+    <circle cx="0"  cy="12" r="4" fill="none" stroke="#6c63ff" stroke-width="1.2"/>
+    <circle cx="0"  cy="12" r="1.8" fill="#6c63ff"/>
+    <circle cx="0"  cy="48" r="4" fill="none" stroke="#3ecfcf" stroke-width="1.2"/>
+    <circle cx="0"  cy="48" r="1.8" fill="#3ecfcf"/>
+    <!-- Connection lines -->
+    <line x1="24" y1="30" x2="44" y2="14" stroke="url(#accent)" stroke-width="1" opacity="0.5"/>
+    <line x1="24" y1="30" x2="44" y2="46" stroke="url(#accent)" stroke-width="1" opacity="0.5"/>
+    <line x1="24" y1="30" x2="4"  y2="14" stroke="url(#accent)" stroke-width="1" opacity="0.5"/>
+    <line x1="24" y1="30" x2="4"  y2="46" stroke="url(#accent)" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- Title -->
+  <text x="90" y="52" font-family="'SF Pro Display', 'Segoe UI', system-ui, sans-serif"
+        font-size="32" font-weight="700" letter-spacing="-0.5"
+        fill="url(#accent)">Voiceover</text>
+
+  <!-- Tagline -->
+  <text x="91" y="74" font-family="'SF Pro Text', 'Segoe UI', system-ui, sans-serif"
+        font-size="12" font-weight="400" letter-spacing="0.3"
+        fill="#8888aa">Voice interface for any AI agent</text>
+</svg>

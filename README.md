@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="img/logo.png" alt="Voiceover Logo" width="340" />
+  <img src="img/logo.svg" alt="Voiceover Logo" width="340" />
 </p>
 
 # Voiceover: Voice Interface for Any AI Agent
