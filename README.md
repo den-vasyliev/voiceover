@@ -25,6 +25,16 @@
 
 ---
 
+## How It Works
+
+Voiceover bridges your voice to agents via the [A2A (Agent-to-Agent)](https://google.github.io/A2A/) and [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) protocols. Skills and tools are discovered automatically — just configure a URL and talk.
+
+<p align="center">
+  <img src="img/how-it-works.svg" alt="How It Works" width="760" />
+</p>
+
+---
+
 ## What's New
 
 Key changes compared to the first version of VoiceOps agent:
@@ -37,16 +47,6 @@ Key changes compared to the first version of VoiceOps agent:
 | **MCP Sampling** | Added `sampling/createMessage` callback — MCP servers can request inference from the agent's model |
 | **Voice / Text** | Console UI supports both modes — toggle with `Ctrl+B` |
 | **Code** | Restructured layout, dead code removed, test coverage added |
-
----
-
-## How It Works
-
-Voiceover bridges your voice to agents via the [A2A (Agent-to-Agent)](https://google.github.io/A2A/) and [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) protocols. Skills and tools are discovered automatically — just configure a URL and talk.
-
-<p align="center">
-  <img src="img/how-it-works.svg" alt="How It Works" width="760" />
-</p>
 
 ---
 
