@@ -63,6 +63,11 @@ Edit `config.yaml` to point at your agents or MCP servers (see [Configuration](#
 make run
 ```
 
+The console UI supports both voice and text input:
+
+- **`Ctrl+B`** — toggle between Audio and Text mode
+- **`Q`** — quit
+
 ---
 
 ## Configuration
