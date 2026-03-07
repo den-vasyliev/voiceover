@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import Any, List, Dict, Callable, cast
+from typing import Any, List, Dict, Callable, Optional, cast
 from uuid import uuid4
 
 # Import from the MCP module
@@ -77,22 +77,62 @@ class MCPToolsIntegration:
         Returns:
             A decorated async function that can be added to a LiveKit agent's tools
         """
+        import inspect
+        import os
         from livekit.agents.llm import function_tool
+        from livekit.agents.llm.tool_context import _FunctionToolInfo, _RawFunctionToolInfo
 
         raw_schema = {
             "name": tool.name,
             "description": tool.description or "",
             "parameters": tool.params_json_schema,
         }
-        async def tool_impl(raw_arguments: dict) -> str:
-            logger.info(f"Invoking tool '{tool.name}' with args: {raw_arguments}")
-            result_str = await tool.on_invoke_tool(None, json.dumps(raw_arguments))
-            logger.info(f"Tool '{tool.name}' result: {result_str}")
-            return result_str
 
-        tool_impl.__name__ = tool.name
+        backend = os.environ.get("AGENT_LLM_BACKEND", "openai")
 
-        return function_tool(tool_impl, raw_schema=raw_schema)
+        if backend == "anthropic":
+            # Build a typed function signature from JSON schema for Anthropic compatibility.
+            # Anthropic plugin uses __livekit_tool_info and inspects the function signature.
+            properties = tool.params_json_schema.get("properties", {})
+            required = set(tool.params_json_schema.get("required", []))
+
+            # Map JSON schema types to Python types
+            type_map = {"string": str, "integer": int, "number": float, "boolean": bool, "array": list, "object": dict}
+
+            params = [inspect.Parameter("self_ctx", inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None, annotation=Any)]
+            for prop_name, prop_schema in properties.items():
+                json_type = prop_schema.get("type", "string")
+                py_type = type_map.get(json_type, str)
+                if prop_name not in required:
+                    py_type = Optional[py_type]
+                    default = None
+                else:
+                    default = inspect.Parameter.empty
+                params.append(inspect.Parameter(prop_name, inspect.Parameter.KEYWORD_ONLY, default=default, annotation=py_type))
+
+            async def tool_impl(**kwargs) -> str:
+                kwargs.pop("self_ctx", None)
+                logger.info(f"Invoking tool '{tool.name}' with args: {kwargs}")
+                result_str = await tool.on_invoke_tool(None, json.dumps(kwargs))
+                logger.info(f"Tool '{tool.name}' result: {result_str}")
+                return result_str
+
+            tool_impl.__name__ = tool.name
+            tool_impl.__signature__ = inspect.Signature(params)
+            tool_impl.__annotations__ = {p.name: p.annotation for p in params if p.annotation is not inspect.Parameter.empty}
+
+            info = _FunctionToolInfo(name=tool.name, description=tool.description or "")
+            setattr(tool_impl, "__livekit_tool_info", info)
+            return tool_impl
+        else:
+            async def tool_impl(raw_arguments: dict) -> str:
+                logger.info(f"Invoking tool '{tool.name}' with args: {raw_arguments}")
+                result_str = await tool.on_invoke_tool(None, json.dumps(raw_arguments))
+                logger.info(f"Tool '{tool.name}' result: {result_str}")
+                return result_str
+
+            tool_impl.__name__ = tool.name
+            return function_tool(tool_impl, raw_schema=raw_schema)
 
     @staticmethod
     async def create_agent_with_tools(agent_class, mcp_servers: List[MCPServer], agent_kwargs: Dict = None,

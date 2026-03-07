@@ -75,23 +75,30 @@ export ELEVEN_API_KEY=your_elevenlabs_api_key
 Select an LLM backend via `AGENT_LLM_BACKEND` (default: `openai`):
 
 ```sh
-# OpenAI (default)
+# OpenAI (default, model: gpt-4.1-mini)
 export AGENT_LLM_BACKEND=openai
 export OPENAI_API_KEY=your_openai_api_key
 
-# Google Gemini
+# Anthropic Claude (model: claude-sonnet-4-6)
+export AGENT_LLM_BACKEND=anthropic
+export ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Google Gemini (model: gemini-2.5-flash)
 export AGENT_LLM_BACKEND=google
 export GOOGLE_API_KEY=your_google_api_key
 
-# Google Vertex AI (requires: gcloud auth application-default login)
+# Google Vertex AI (model: gemini-2.5-flash, requires: gcloud auth application-default login)
 export AGENT_LLM_BACKEND=vertex
 export GOOGLE_CLOUD_PROJECT=your_project_id
 
-# Ollama
+# Ollama (model: llama3)
 export AGENT_LLM_BACKEND=ollama
+
+# GitHub Copilot — coming soon
+# Uses gh CLI token (gh auth login) + Copilot session token exchange
 ```
 
-Override the model with `AGENT_LLM_MODEL` (e.g. `gemini-2.5-pro`, `gpt-4o`).
+Override the model with `AGENT_LLM_MODEL` (e.g. `claude-opus-4-6`, `gemini-2.5-pro`, `gpt-4o`).
 
 Edit `config.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).
 

@@ -8,12 +8,14 @@ import os
 import logging
 from livekit.agents.voice import Agent
 from livekit.agents.llm import ChatChunk
-from livekit.plugins import openai, silero, elevenlabs, google
+from livekit.plugins import openai, silero, elevenlabs, google, anthropic
 
 def create_llm():
     """Create the LLM instance from environment config. Can be shared with MCP sampling."""
     llm_model = os.environ.get("AGENT_LLM_MODEL")
     llm_backend = os.environ.get("AGENT_LLM_BACKEND", "openai")
+    if llm_backend == "anthropic":
+        return anthropic.LLM(model=llm_model or "claude-sonnet-4-6")
     if llm_backend == "google":
         return google.LLM(model=llm_model or "gemini-2.5-flash")
     if llm_backend == "vertex":
