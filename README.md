@@ -21,7 +21,7 @@
 > The core idea is simple: your voice goes in, the agent does the work, the answer comes back as speech - just a conversation with your infrastructure.                       
                                                  
 
-[▶️ Watch a quick demo](https://youtube.com/shorts/3cU2NpGXqRk)
+[▶️ Watch a quick demo](https://youtu.be/SUKXOkw4AnQ)
 
 ---
 
