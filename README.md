@@ -18,18 +18,14 @@
 
 Voiceover bridges your voice to agents via the [A2A (Agent-to-Agent)](https://google.github.io/A2A/) and [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) protocols. Skills and tools are discovered automatically — just configure a URL and talk.
 
-```
-You (voice) → Whisper STT → GPT-4.1 → A2A / MCP → your agent
-                    ↑                        ↑
-              any language         auto skill discovery
-```
-
-**Stack:**
-- Speech-to-text: OpenAI Whisper (multilingual)
-- LLM: OpenAI GPT-4.1-mini
-- Text-to-speech: ElevenLabs Multilingual v2 (30+ languages)
-- Voice activity detection: Silero VAD
-- Agent framework: [LiveKit Agents](https://docs.livekit.io/agents/)
+| Component | Technology |
+|---|---|
+| Speech-to-text | OpenAI Whisper (multilingual) |
+| LLM | OpenAI GPT-4.1-mini |
+| Text-to-speech | ElevenLabs Multilingual v2 (30+ languages) |
+| Voice activity detection | Silero VAD |
+| Agent framework | [LiveKit Agents](https://docs.livekit.io/agents/) |
+| Agent protocol | [A2A](https://google.github.io/A2A/) / [MCP](https://modelcontextprotocol.io/) |
 
 ---
 
