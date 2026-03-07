@@ -56,7 +56,8 @@ Voiceover bridges your voice to agents via the [A2A (Agent-to-Agent)](https://go
 ### Prerequisites
 
 - Python 3.9+
-- API keys: OpenAI, ElevenLabs, LiveKit
+- API keys: ElevenLabs, LiveKit
+- LLM backend API key (see [LLM Backends](#llm-backends))
 
 ### Install
 
@@ -69,9 +70,29 @@ make install
 ### Configure
 
 ```sh
-export OPENAI_API_KEY=your_openai_api_key
 export ELEVEN_API_KEY=your_elevenlabs_api_key
 ```
+
+Select an LLM backend via `AGENT_LLM_BACKEND` (default: `openai`):
+
+```sh
+# OpenAI (default)
+export AGENT_LLM_BACKEND=openai
+export OPENAI_API_KEY=your_openai_api_key
+
+# Google Gemini
+export AGENT_LLM_BACKEND=google
+export GOOGLE_API_KEY=your_google_api_key
+
+# Google Vertex AI (requires: gcloud auth application-default login)
+export AGENT_LLM_BACKEND=vertex
+export GOOGLE_CLOUD_PROJECT=your_project_id
+
+# Ollama
+export AGENT_LLM_BACKEND=ollama
+```
+
+Override the model with `AGENT_LLM_MODEL` (e.g. `gemini-2.5-pro`, `gpt-4o`).
 
 Edit `config.yaml` to point at your agents or MCP servers (see [Configuration](#configuration)).
 

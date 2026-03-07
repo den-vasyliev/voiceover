@@ -2,10 +2,10 @@ livekit-agents>=1.0.23,<1.1
 livekit-plugins-openai>=1.0.23,<1.1
 livekit-plugins-silero>=1.0.23,<1.1
 livekit-plugins-elevenlabs>=1.0.23,<1.1
+livekit-plugins-google>=1.0.23,<1.1
 mcp>=1.26.0
 pytest
 pytest-asyncio
 PyYAML
 httpx
-PyJWT
-a2a-min
+PyJWT>=2.0
