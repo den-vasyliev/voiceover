@@ -92,6 +92,12 @@ servers:
       env_var: MCP_TOKEN
 ```
 
+### MCP Sampling
+
+Voiceover supports [MCP sampling](https://modelcontextprotocol.io/docs/concepts/sampling) — MCP servers can request LLM inference from the client during tool execution. This allows agentic MCP servers to ask the agent's model for reasoning or decision-making mid-task, without needing their own LLM.
+
+The sampling callback is wired automatically — no extra configuration needed. Any MCP server that sends a `sampling/createMessage` request will receive a response from the configured model.
+
 ### Authentication
 
 ```yaml
