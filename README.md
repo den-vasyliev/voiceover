@@ -1,395 +1,299 @@
 <p align="center">
-  <img src="img/logo.png" alt="VoiceOps Logo" width="340" />
+  <img src="img/logo.png" alt="Voiceover Logo" width="340" />
 </p>
 
-# VoiceOps: SRE & Kubernetes Agent with MCP/A2A Tools and Skills
+# Voiceover: Voice Interface for Kagent
+
 <p align="center">
-  <img src="img/kagent.png" alt="VoiceOps Schema" width="740" />
+  <img src="img/kagent.png" alt="Voiceover + Kagent" width="740" />
 </p>
 
-A conversational AI agent and voice assistant application built with the LiveKit Agents framework, capable of using Model Context Protocol (MCP) tools to interact with external services for SRE and Kubernetes operations.
+**Voiceover** gives you a voice interface to any AI agent running in [kagent](https://kagent.dev/). Talk to your Kubernetes, Helm, Istio, Cilium, and observability agents — hands-free, in plain English.
 
-[▶️ Watch a quick usage demo](https://youtube.com/shorts/3cU2NpGXqRk)
+[▶️ Watch a quick demo](https://youtube.com/shorts/3cU2NpGXqRk)
 
 ---
 
-## Table of Contents
+## How It Works
 
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Example: Running a Sample MCP Server](#example-running-a-sample-mcp-server)
-- [Sample Prompts](#sample-prompts)
-- [Prerequisites](#prerequisites)
-- [Configuration](#configuration)
-  - [MCP Servers](#mcp-servers)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Acknowledgements](#acknowledgements)
-- [Getting Started with Kagent Integration](#getting-started-with-kagent-integration)
+Voiceover connects to kagent agents over the [A2A (Agent-to-Agent) protocol](https://google.github.io/A2A/). Each kagent agent exposes its skills via A2A — Voiceover discovers them automatically and makes them available as voice commands.
+
+```
+You (voice) → Whisper STT → GPT-4.1 → A2A → kagent agent → cluster
+                                            ↑
+                              skill discovery via /.well-known/agent.json
+```
+
+**Stack:**
+- Speech-to-text: OpenAI Whisper
+- LLM: OpenAI GPT-4.1-mini
+- Text-to-speech: ElevenLabs
+- Voice activity detection: Silero VAD
+- Agent framework: [LiveKit Agents](https://docs.livekit.io/agents/)
+- Agent backend: [kagent](https://kagent.dev/)
 
 ---
-
-## Features
-
-- Voice-based interaction with an AI assistant
-- Integration with MCP tools from multiple external servers (flexible config)
-- Speech-to-text (OpenAI Whisper)
-- Natural language processing (OpenAI GPT-4o)
-- Text-to-speech (ElevenLabs)
-- Voice activity detection (Silero)
-- **Note:** This agent currently supports only HTTP/SSE MCP servers. NPX/subprocess-based MCP server support will be added in the future.
-
-**⚠️ WARNING: Use Caution with Real Kubernetes Clusters**
-
-This agent can create, modify, and delete resources in your Kubernetes cluster. Always review your configuration and tool restrictions before connecting to a production or sensitive environment. Test in a safe environment first.
-
-<p align="center">
-  <img src="img/terminal.png" alt="VoiceOps terminal" width="100%" />
-</p>
-
 
 ## Quick Start
 
-1. **Create and activate a Python virtual environment:**
-   ```sh
-   make venv
-   source venv/bin/activate
-   ```
-2. **Install dependencies:**
-   ```sh
-   make uv  # (optional, for fast installs)
-   make install
-   ```
-3. **Set environment variables:**
-   ```sh
-   export OPENAI_API_KEY=your_openai_api_key
-   export ELEVEN_API_KEY=your_elevenlabs_api_key
-   ```
-4. [**Configure MCP servers**](#mcp-servers) in `mcp_servers.yaml` (see below for details).
-5. **Run tests:**
-   ```sh
-   make test
-   ```
-6. **Run the agent:**
-   ```sh
-   make run
-   ```
-
-
-## Example: Running a Sample MCP Server
-### [mcp-server-kubernetes official repo](https://github.com/Flux159/mcp-server-kubernetes)
-
-To run a sample MCP server that only allows non-destructive tools, use the following command:
-
-```sh
-ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS=true ENABLE_UNSAFE_SSE_TRANSPORT=1 PORT=8092 npx mcp-server-kubernetes
-```
-
-- `ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS=true` restricts the server to non-destructive tools only.
-- `ENABLE_UNSAFE_SSE_TRANSPORT=1` enables SSE transport for local testing.
-- `PORT=8092` sets the server port.
-
-You can then point your agent's `mcp_servers.yaml` to `http://localhost:8092/sse`.
-
-### Using Supergateway for stdio-based MCP Servers
-
-[Supergateway](https://github.com/supercorp-ai/supergateway) allows you to expose stdio-based MCP servers over SSE or WebSockets. This is useful for tools like kubectl-ai that only support stdio interfaces e.g. for kubectl-ai MCP agent (https://github.com/GoogleCloudPlatform/kubectl-ai)
-
-To run kubectl-ai as an MCP server via Supergateway:
-
-```sh
-npx -y supergateway --stdio "kubectl-ai --llm-provider=openai --model=gpt-4.1 --mcp-server" --messagePath / --port 8008
-```
-
-Then add this to your `mcp_servers.yaml`:
-
-```yaml
-servers:
-  - name: kubectl-ai-mcp
-    url: http://localhost:8008/sse
-```
-
-Supergateway creates an HTTP server that:
-- Listens for SSE connections at `http://localhost:8008/sse`
-- Forwards messages to the stdio-based MCP server
-- Returns responses back to clients
-
-
-## Sample Prompts
-
-Try these example prompts with your agent:
-
-- **Show all resources in a namespace:**
-  > show me all resources in default namespace
-
-- **List all pods:**
-  > list pods in dev namespace
-
-- **Describe a pod:**
-  > describe pod my-app-123 in default namespace
-
-- **Get recent events:**
-  > get events from the prod namespace
-
-- **Scale a deployment:**
-  > scale deployment my-app to 3 replicas in dev
-
-- **Get logs from a job:**
-  > get logs from job backup-job in default namespace
-
-- **List all deployments:**
-  > list deployments in prod
-
-## Prerequisites
+### Prerequisites
 
 - Python 3.9+
-- API keys for OpenAI and ElevenLabs
-- At least one MCP server endpoint
-- **npx (Node.js)** is required to run the sample MCP server. If you don't have npx, install Node.js from [nodejs.org](https://nodejs.org/).
+- A running [kagent](https://kagent.dev/) installation in your cluster
+- API keys: OpenAI, ElevenLabs, LiveKit
 
-  **OS-specific tips:**
-  - **macOS:** You can also install Node.js with Homebrew: `brew install node`
-  - **Linux:** Use your package manager (e.g. `sudo apt install nodejs npm` for Ubuntu/Debian) or download from [nodejs.org](https://nodejs.org/).
-  - **Windows:** Download the installer from [nodejs.org](https://nodejs.org/) and follow the setup instructions.
-
-## Configuration
-
-### MCP Servers
-
-Edit `mcp_servers.yaml` in the project root. Example:
-
-```yaml
-servers:
-  # Example: Allow only non-destructive list and describe tools from a local Kubernetes MCP server
-  - name: k8s-mcp-server
-    url: http://localhost:8092/sse
-    allowed_tools:
-      - list_*           # allow all list tools
-      - describe_*       # allow all describe tools
-      - get_*            # allow all get tools
-```
-The agent connects to the specified LiveKit room and loads all MCP servers/tools from your config.
-
-### Authentication
-
-MCP servers support two authentication types via the `auth` block in `mcp_servers.yaml`.
-
-**Bearer token** — sets `Authorization: Bearer <token>` as an HTTP header:
-
-```yaml
-servers:
-  - name: secure-mcp-server
-    url: https://example.com/sse
-    auth:
-      type: bearer
-      env_var: MY_API_TOKEN
-```
-
-**HMAC secret key** — signs each tool call's arguments with HMAC-SHA256, adding the signature as an `auth` field in the request body:
-
-```yaml
-servers:
-  - name: hmac-mcp-server
-    url: https://example.com/sse
-    auth:
-      type: secret_key
-      env_var: MY_SECRET_KEY
-```
-
-In both cases, set the environment variable referenced by `env_var`:
+### Install
 
 ```sh
-export MY_API_TOKEN=your_token_here
-export MY_SECRET_KEY=your_secret_key_here
+make venv
+source venv/bin/activate
+make install
 ```
 
-If the environment variable is not set, the server connects without authentication and a warning is logged.
+### Configure
 
-### A2A Agent Integration
+Set environment variables:
 
-The agent supports connecting to A2A (Agent-to-Agent) servers, allowing you to use skills from other AI agents as tools. This is useful for integrating with external AI services or custom agents that expose their own skills.
+```sh
+export OPENAI_API_KEY=your_openai_api_key
+export ELEVEN_API_KEY=your_elevenlabs_api_key
+export LIVEKIT_URL=wss://your-livekit-server
+export LIVEKIT_API_KEY=your_livekit_api_key
+export LIVEKIT_API_SECRET=your_livekit_api_secret
+```
 
-To add an A2A agent, use the `type: a2a` field in your `mcp_servers.yaml`:
+Point `mcp_servers.yaml` at your kagent instance. The agents below are the standard kagent agents — adjust the base URL to your cluster:
 
 ```yaml
 servers:
-  - name: my-a2a-agent
+  - name: k8s-agent
     type: a2a
-    url: https://my-a2a-agent.example.com
-    allowed_tools: ["*"]  # (optional) restrict which skills are available
-    headers:
-      Authorization: Bearer <token>  # (optional) custom headers for auth
+    url: https://kagent.example.com/api/a2a/kagent/k8s-agent
+
+  - name: helm-agent
+    type: a2a
+    url: https://kagent.example.com/api/a2a/kagent/helm-agent
+
+  - name: observability-agent
+    type: a2a
+    url: https://kagent.example.com/api/a2a/kagent/observability-agent
+
+  - name: istio-agent
+    type: a2a
+    url: https://kagent.example.com/api/a2a/kagent/istio-agent
+
+  - name: cilium-manager-agent
+    type: a2a
+    url: https://kagent.example.com/api/a2a/kagent/cilium-manager-agent
 ```
 
-- `type: a2a` tells the agent to treat this server as an A2A agent, not a standard MCP server.
-- The agent will automatically discover available skills from the A2A agent's `/\.well-known/agent.json` endpoint.
-- Each skill is exposed as a callable tool. You can invoke these skills by natural language or by specifying the tool name.
-- Note: `allowed_tools` is not applied for A2A servers — all discovered skills are available.
+### Run
 
-**Use cases:**
-- Integrate with external LLM agents, chatbots, or custom AI services that expose skills via the A2A protocol.
-- Chain together multiple agents, each with specialized capabilities.
+```sh
+make run
+```
 
-See the [A2A protocol specification](https://google.github.io/A2A/) for more details on how to implement your own A2A agent.
+---
 
+## Kagent Setup
 
-## Getting Started with Kagent Integration
+### 1. Deploy kagent
 
-VoiceOps can be integrated with [Kagent](https://kagent.dev/), an open-source framework for running agentic AI in Kubernetes environments. Kagent enables DevOps and platform engineers to automate complex operations, troubleshoot issues, and manage cloud-native resources using AI agents.
+Follow the [kagent installation docs](https://kagent.dev/docs/getting-started/installation).
 
-### Why Integrate with Kagent?
-- **Unified AI Operations:** Leverage Kagent's built-in tools for Kubernetes, Prometheus, Istio, Argo, Helm, and more.
-- **Autonomous Agents:** Run agents that plan, execute, and analyze operational tasks in your cluster.
-- **Extensible Framework:** Easily extend with custom tools and agents for your specific workflows.
+### 2. Expose the A2A API
 
-### Basic Integration Steps
-1. **Deploy Kagent in your Kubernetes cluster:**
-   - Follow the [Kagent documentation](https://kagent.dev/) for installation instructions.
-2. **Configure Kagent as an A2A server:**
-   - In your `mcp_servers.yaml`, add your Kagent A2A server endpoint:
-    ```yaml
-        - name: k8s-a2a-agent
-          type: a2a
-          url: http://a2a.mockee.me/api/a2a/kagent/k8s-agent
-    ```
-3. **Start VoiceOps:**
-   - Run VoiceOps as usual. The agent will now be able to use Kagent's tools for cloud-native operations.
+Create an HTTPRoute for `/api/a2a` pointing to the kagent controller:
 
-### Example Use Cases
-- Diagnose application connectivity and performance issues
-- Automate traffic management and alerting
-- Run intelligent troubleshooting and remediation tasks
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kagent-a2a-route
+  namespace: kagent
+spec:
+  hostnames:
+  - kagent.example.com
+  parentRefs:
+  - kind: Gateway
+    name: your-gateway
+    namespace: your-gateway-namespace
+    sectionName: https
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/a2a
+    backendRefs:
+    - name: kagent-controller
+      port: 8083
+```
 
-For more details, visit the [Kagent website](https://kagent.dev/) and explore the documentation and community resources.
+### 3. Add a2aConfig to your agents
+
+Each kagent agent needs an `a2aConfig` block so Voiceover can discover its skills:
+
+```yaml
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: k8s-agent
+  namespace: kagent
+spec:
+  declarative:
+    # ... existing config ...
+    a2aConfig:
+      skills:
+      - id: k8s-operations-skill
+        name: Kubernetes Operations
+        description: Kubernetes cluster operations, troubleshooting, and maintenance.
+        inputModes: [text]
+        outputModes: [text]
+        tags: [k8s, kubernetes]
+        examples:
+        - "Get all pods in the default namespace"
+        - "Describe deployment nginx"
+        - "Get recent events in kube-system"
+```
+
+---
+
+## Available Kagent Agents
+
+Out of the box, kagent ships with agents for:
+
+| Agent | Skills |
+|---|---|
+| `k8s-agent` | Pod/deployment/resource management, events, logs |
+| `helm-agent` | Helm release lifecycle, repo management |
+| `observability-agent` | Prometheus queries, Grafana dashboards, Loki logs |
+| `promql-agent` | PromQL generation from natural language |
+| `istio-agent` | Service mesh config, traffic management, mTLS |
+| `kgateway-agent` | Gateway API resources, routing, troubleshooting |
+| `cilium-manager-agent` | Cilium install, upgrade, ClusterMesh, Hubble |
+| `cilium-policy-agent` | CiliumNetworkPolicy generation |
+| `cilium-debug-agent` | Cilium endpoint/BPF/encryption diagnostics |
+| `argo-rollouts-conversion-agent` | Convert Deployments to Argo Rollouts |
+
+---
+
+## Example Voice Commands
+
+- _"Get all pods in the default namespace"_
+- _"Show me the error rate for the payments service"_
+- _"Convert deployment my-app to an Argo Rollout with canary strategy"_
+- _"Generate a PromQL query for 95th percentile latency"_
+- _"Create a network policy to isolate namespace production"_
+- _"List all Helm releases and check if any failed"_
+- _"Enable Hubble observability on the cluster"_
+- _"Show Istio waypoint status"_
+
+---
+
+## Configuration Reference
+
+### A2A Servers
+
+```yaml
+servers:
+  - name: my-agent          # display name
+    type: a2a               # use a2a for kagent agents
+    url: https://...        # /api/a2a/kagent/<agent-name>
+    auth:                   # optional
+      type: bearer
+      env_var: MY_TOKEN
+```
+
+### MCP Servers (also supported)
+
+```yaml
+servers:
+  - name: my-mcp-server
+    type: mcp               # default if omitted
+    url: https://.../sse
+    allowed_tools: [tool1, tool2]
+    auth:
+      type: bearer          # or: secret_key (HMAC-SHA256)
+      env_var: MY_TOKEN
+```
+
+---
 
 ## Project Structure
 
 ```
-voice-mcp-agent/
+voiceover/
 ├── src/
-│   ├── main.py               # Entry point for running the agent
-│   ├── agent_core.py         # Core agent logic and LiveKit integration
-│   ├── a2a.py                # Agent-to-Agent (A2A) protocol support
-│   ├── mcp_config.py         # Config loader and env var expansion
-│   ├── tool_integration.py   # Dynamic tool preparation for MCP and A2A servers
+│   ├── main.py               # Entry point
+│   ├── agent_core.py         # LiveKit agent loop
+│   ├── a2a.py                # A2A protocol client
+│   ├── mcp_config.py         # Config loader
+│   ├── tool_integration.py   # Dynamic tool registration
 │   └── mcp_client/
-│       ├── __init__.py
-│       ├── agent_tools.py    # LiveKit tool registration helpers
-│       ├── auth.py           # HMAC authentication middleware
-│       ├── server.py         # MCP server connection and retry logic
-│       ├── sse_client.py     # HTTP/SSE transport client
-│       └── util.py           # FunctionTool and MCPUtil helpers
+│       ├── server.py         # MCP server connection
+│       ├── sse_client.py     # HTTP/SSE transport
+│       ├── auth.py           # Bearer + HMAC auth
+│       ├── agent_tools.py    # LiveKit tool helpers
+│       └── util.py           # Shared utilities
 ├── tests/
-│   ├── test_a2a.py
-│   ├── test_agent_config.py
-│   ├── test_auth.py
-│   ├── test_tool_integration.py
-│   └── test_util.py
-├── img/
-├── mcp_servers.yaml          # MCP/A2A server configuration
-├── system_prompt.txt         # Agent system prompt
-├── pytest.ini
+├── mcp_servers.yaml          # Agent configuration
+├── system_prompt.txt         # LLM system prompt
 ├── requirements.txt
 └── Makefile
 ```
 
+---
+
 ## Testing
 
-Run unit tests:
-
 ```sh
-   make test
+make test
 ```
+
+52 unit tests covering A2A client, auth, tool integration, and MCP utilities.
+
+---
 
 ## Troubleshooting
 
-### SSL Certificate Errors (CERTIFICATE_VERIFY_FAILED)
-
-If you see an error like:
-
-```
-aiohttp.client_exceptions.ClientConnectorCertificateError: Cannot connect to host api.elevenlabs.io:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1006)')]
-```
-
-#### macOS:
-- Run the Install Certificates script for your Python version
+### SSL errors
 
 ```sh
-make certs-macos
+make certs-macos   # macOS
+make certs-linux   # Linux
 ```
 
-#### Linux:
-- Ensure `ca-certificates` is installed and updated.
+### Agent not responding
 
-```sh
-make certs-linux
-```
+- Check the HTTPRoute for `/api/a2a` is accepted by your gateway
+- Verify the agent has `a2aConfig.skills` set (see [Kagent Setup](#kagent-setup))
+- Confirm `/.well-known/agent.json` is reachable: `curl https://kagent.example.com/api/a2a/kagent/k8s-agent/.well-known/agent.json`
 
-#### Virtual environments:
-- Create the venv with a Python that has access to system certificates.
-
-**Do NOT disable SSL verification in production.**
-
-### Schema Validation Errors with LLM or MCP Tools
-
-If you encounter errors such as `invalid_function_parameters`, `Invalid schema for function`, or similar messages from the LLM or MCP server, it usually means your tool schema is not valid or not compatible with the LLM's requirements.
-
-- Double-check your tool's JSON schema in `mcp_servers.yaml` or your MCP server configuration.
-- Ensure all required fields, types, and nested schemas are correct and follow the [JSON Schema specification](https://json-schema.org/).
-- For OpenAI function calling, see [OpenAI Function Calling docs](https://platform.openai.com/docs/guides/function-calling).
-- Refer to the official documentation of the MCP server you are using for the correct schema format and requirements.
+---
 
 ## Contributing
 
-Contributions, feedback, and ideas are welcome!
+Contributions are welcome! Please open an issue first for major changes.
 
-### How to Contribute
+1. Fork the repo
+2. Create a branch: `git checkout -b my-feature`
+3. Commit your changes
+4. Open a Pull Request
 
-1. **Fork the repository** on GitHub.
-2. **Clone your fork** to your local machine:
-   ```sh
-   git clone https://github.com/your-username/voice-mcp.git
-   cd voice-mcp
-   ```
-3. **Create a new branch** for your feature or fix:
-   ```sh
-   git checkout -b my-feature-branch
-   ```
-4. **Make your changes** and add tests if applicable.
-5. **Commit your changes**:
-   ```sh
-   git add .
-   git commit -m "Describe your change"
-   ```
-6. **Push to your fork**:
-   ```sh
-   git push origin my-feature-branch
-   ```
-7. **Open a Pull Request** on GitHub, describing your changes and why they should be merged.
-8. **Discuss and address feedback** from maintainers or other contributors.
-
-For major changes, please open an issue first to discuss what you would like to change.
-
-Make sure to follow best practices and keep the codebase clean and well-documented.
-
-Let's build something great together!
-
-
-## Acknowledgements
-- DeepLearning.AI short course [Building AI Voice Agents for Production](https://www.deeplearning.ai/short-courses/building-ai-voice-agents-for-production/)
-- [LiveKit](https://livekit.io/)
-- [OpenAI](https://openai.com/)
-- [ElevenLabs](https://elevenlabs.io/)
-- [Silero](https://github.com/snakers4/silero-vad)
-- [Kubernetes](https://kubernetes.io/) and the broader CNCF ecosystem
-- [httpx](https://www.python-httpx.org/) and [anyio](https://anyio.readthedocs.io/en/stable/)
-- The Python, Node.js, and open source communities
-- All contributors, testers, and users who help improve this project
-- Inspiration from the [Model Context Protocol (MCP)](https://github.com/modelcontext/protocol) and related projects
-- **This project was created in the spirit of Vibe Coding - when human creativity, collaboration, and a  personal passion come together with AI to create something amazing.**
+---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT License](LICENSE)
+
+---
+
+## Acknowledgements
+
+- [kagent](https://kagent.dev/) — the Kubernetes-native AI agent framework this project is built for
+- [LiveKit Agents](https://docs.livekit.io/agents/) — voice agent framework
+- [OpenAI](https://openai.com/) — Whisper STT and GPT-4.1
+- [ElevenLabs](https://elevenlabs.io/) — text-to-speech
+- [Silero VAD](https://github.com/snakers4/silero-vad) — voice activity detection
+- [A2A Protocol](https://google.github.io/A2A/) — agent interoperability standard
+- DeepLearning.AI course: [Building AI Voice Agents for Production](https://www.deeplearning.ai/short-courses/building-ai-voice-agents-for-production/)
