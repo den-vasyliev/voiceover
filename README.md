@@ -13,8 +13,7 @@
 >Running AI agents in Kubernetes is becoming mainstream. Tools like
   [kagent](https://kagent.dev/)  let you deploy specialized agents for Kubernetes operations, 
   Helm, Istio, Cilium, observability — each with deep domain
-  expertise. But interacting with them still means typing commands    
-  into a terminal or a chat UI. 
+  expertise. But interacting with them still means typing commands into a terminal or a chat UI. 
 
 >What if you could just talk?                                        
   
