@@ -32,6 +32,28 @@ def _extract_parts_text(parts: List[Dict[str, Any]]) -> str:
     )
 
 
+def _extract_tool_response_text(history: List[Dict[str, Any]]) -> str:
+    """Extract text from kagent function_response parts in history.
+
+    kagent returns tool results as kind=data parts with structure:
+      data.response.content[].{type: "text", text: "..."}
+    """
+    texts = []
+    for msg in history:
+        for part in msg.get("parts", []):
+            if part.get("kind") != "data":
+                continue
+            if part.get("metadata", {}).get("kagent_type") != "function_response":
+                continue
+            response = part.get("data", {}).get("response", {})
+            if response.get("isError"):
+                continue
+            for content in response.get("content", []):
+                if content.get("type") == "text" and content.get("text"):
+                    texts.append(content["text"])
+    return "".join(texts)
+
+
 class A2AError(Exception):
     """Base exception for A2A protocol errors."""
     pass
@@ -174,6 +196,8 @@ class A2AServerConfig:
                 result = task_response.get("result", {})
                 status = result.get("status", {})
 
+                logger.debug(f"A2A raw result: {result}")
+
                 if status.get("state") == "completed":
                     # Extract response from artifacts
                     for artifact in result.get("artifacts", []):
@@ -192,12 +216,31 @@ class A2AServerConfig:
 
                     return "Task completed but no response found"
                 elif status.get("state") == "failed":
+                    # kagent marks the task failed when its LLM call errors out,
+                    # even if the tool itself executed successfully. Recover the result.
+                    history = result.get("history", [])
+
+                    # Prefer a clean agent text message (no API_ERROR)
+                    for msg in reversed(history):
+                        if msg.get("role") == "agent" and msg.get("metadata", {}).get("kagent_error_code") != "API_ERROR":
+                            text = _extract_parts_text(msg.get("parts", []))
+                            if text:
+                                logger.info(f"A2A: recovered agent message from history ({len(text)} chars)")
+                                return text
+
+                    # Fall back to raw tool output from function_response parts
+                    text = _extract_tool_response_text(history)
+                    if text:
+                        logger.info(f"A2A: recovered tool output from history ({len(text)} chars)")
+                        return text
                     error_msg = status.get("message", {})
                     if isinstance(error_msg, dict):
                         error_text = _extract_parts_text(error_msg.get("parts", []))
                         if error_text:
-                            raise A2ATaskError(f"Task failed: {error_text}")
-                    raise A2ATaskError(f"Task failed: {status}")
+                            logger.error(f"A2A task failed: {error_text}")
+                            return f"The agent reported an error: {error_text}"
+                    logger.error(f"A2A task failed: {status}")
+                    return f"The agent reported an error: {status}"
                 else:
                     return f"Task did not complete. Status: {status}"
                     
