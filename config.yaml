@@ -1,43 +1,55 @@
 servers:
-  # ── kagent A2A agents (namespace: kagent) ──────────────────────────────────
-  # Base URL: https://<your-kagent-host>/api/a2a/kagent/<agent-name>
+  # ── MCP servers ───────────────────────────────────────────────────────────
 
-  - name: k8s-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/k8s-agent
+- name: triage-agent
+  type: mcp
+  url: https://triage-agent.example.com/mcp
+  auth:
+    type: bearer
+    env_var: TRIAGEAGENT_TOKEN
 
-  - name: helm-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/helm-agent
+  # ── kagent A2A agents ─────────────────────────────────────────────────────
 
-  - name: observability-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/observability-agent
+- name: k8s-agent
+  type: a2a
+  url: https://agentgateway.example.com/api/a2a/kagent/k8s-agent
 
-  - name: promql-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/promql-agent
+  # - name: k8s-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/k8s-agent
 
-  - name: istio-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/istio-agent
+  # - name: helm-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/helm-agent
 
-  - name: kgateway-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/kgateway-agent
+  # - name: observability-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/observability-agent
 
-  - name: cilium-manager-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/cilium-manager-agent
+  # - name: promql-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/promql-agent
 
-  - name: cilium-policy-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/cilium-policy-agent
+  # - name: istio-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/istio-agent
 
-  - name: cilium-debug-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/cilium-debug-agent
+  # - name: kgateway-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/kgateway-agent
 
-  - name: argo-rollouts-conversion-agent
-    type: a2a
-    url: https://kagent.example.com/api/a2a/kagent/argo-rollouts-conversion-agent
+  # - name: cilium-manager-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/cilium-manager-agent
+
+  # - name: cilium-policy-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/cilium-policy-agent
+
+  # - name: cilium-debug-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/cilium-debug-agent
+
+  # - name: argo-rollouts-conversion-agent
+  #   type: a2a
+  #   url: https://kagent.example.com/api/a2a/kagent/argo-rollouts-conversion-agent
