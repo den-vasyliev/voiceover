@@ -8,11 +8,11 @@ servers:
     type: bearer
     env_var: TRIAGEAGENT_TOKEN
 
-  # ── kagent A2A agents ─────────────────────────────────────────────────────
+  # ── A2A agents ───────────────────────────────────────────────────────────
 
-- name: k8s-agent
+- name: k8s-rca-agent
   type: a2a
-  url: https://agentgateway.example.com/api/a2a/kagent/k8s-agent
+  url: https://agentgateway.example.com/api/a2a/triageagent/k8s-rca-agent
 
   # - name: k8s-agent
   #   type: a2a
